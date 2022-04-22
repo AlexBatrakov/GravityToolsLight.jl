@@ -2,3 +2,7 @@ name = "GravityTools"
 uuid = "09aca097-cb19-4b74-891e-9b30d5df4803"
 authors = ["Alexander Batrakov <batrakovalex.astro@gmail.com>"]
 version = "0.1.0"
+
+[deps]
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+StructureSolver = "86949bca-1401-4ad7-afb8-e041cb4ccbe4"
