@@ -11,12 +11,16 @@ end
 
 abstract type ScalarTensorGravity <: GravityTheory end
 
-struct DEF <: ScalarTensorGravity
+mutable struct DEF <: ScalarTensorGravity
 	alpha0::Float64
 	beta0::Float64
+    function DEF(alpha0, beta0)
+        return new(alpha0, beta0)
+    end
+    function DEF()
+        return new()
+    end
 end
-
-DEF() = DEF(0.0, 0.0)
 
 struct DEFGrid
     eosname::Symbol
@@ -153,23 +157,22 @@ mutable struct Object
 end
 
 mutable struct BinarySystem
-    PSR::Object
-    Comp::Object
+    psr::Object
+    comp::Object
+    name::String
     K_params::KType
     PK_params::PKType
-    function BinarySystem(PSR::Object, Comp::Object)
-        return new(PSR, Comp)
-#        return new(PSR, Comp, KType(zeros(5)), PKType(zeros(5)))
+    function BinarySystem(psr::Object, comp::Object)
+        return new(psr, comp)
     end
-    function BinarySystem(PSR_type::Symbol, Comp_type::Symbol)
-#        return new(Object(PSR_type), Object(Comp_type), KType(zeros(5)), PKType(zeros(5)))
-        return new(Object(PSR_type), Object(Comp_type))
+    function BinarySystem(psr_type::Symbol, comp_type::Symbol)
+        return new(Object(psr_type), Object(comp_type))
     end
 end
 
 function Base.show(io::IO, bnsys::BinarySystem)
-	println(io, "Pulsar: ", bnsys.PSR)
-	println(io, "Companion: ", bnsys.Comp)
+	println(io, "Pulsar: ", bnsys.psr)
+	println(io, "Companion: ", bnsys.comp)
 	println(io, "Keplerian parameters: ", bnsys.K_params)
 	println(io, "Post-Keplerian parameters: ", bnsys.PK_params)
 	return nothing
@@ -189,13 +192,15 @@ end
 mutable struct DEFPhysicalFramework <: PhysicalFramework
     theory::DEF
     eosname::Symbol
-    grid::DEFGrid
     bnsys::BinarySystem
     sets::Settings
+    grid::DEFGrid
     mgrid::DEFMassGrid
+    function DEFPhysicalFramework(theory::DEF, eosname::Symbol, bnsys::BinarySystem)
+        return new(theory, eosname, bnsys) 
+    end
     function DEFPhysicalFramework(theory::DEF, eosname::Symbol, bnsys::BinarySystem, sets::Settings)
-        grid = read_DEFGrid(eosname, sets.path_to_grids)
-        return(new(theory, eosname, grid, bnsys, sets))
+        return new(theory, eosname, bnsys, sets)
     end
 end
 
@@ -208,8 +213,90 @@ function Base.show(io::IO, pf::DEFPhysicalFramework)
 	return nothing
 end
 
-function reinitialize!(pf::DEFPhysicalFramework)
+function read_grid!(pf::DEFPhysicalFramework)
     pf.grid = read_DEFGrid(pf.eosname, pf.sets.path_to_grids)
+    return pf
+end
+
+function interpolate_mgrid!(pf::DEFPhysicalFramework)
+    pf.mgrid = interpolate_DEFMassGrid(pf.grid, pf.theory.alpha0, pf.theory.beta0)
+    return pf
+end
+
+function interpolate_psr!(pf::DEFPhysicalFramework)
+    psr = pf.bnsys.psr
+    psr.alphaA, psr.betaA, psr.kA = interpolate_NS(pf.mgrid, psr.mass)
+    return pf
+end
+
+function interpolate_comp!(pf::DEFPhysicalFramework)
+    comp = pf.bnsys.comp
+    if comp.type == :NS
+        comp.alphaA, comp.betaA, comp.kA = interpolate_NS(pf.mgrid, comp.mass)
+    elseif  comp.type == :BH
+        comp.alphaA, comp.betaA, comp.kA = 0.0, 0.0, 0.0
+    elseif  comp.type == :WD
+        comp.alphaA, comp.betaA, comp.kA = pf.theory.alpha0, pf.theory.beta0, 0.0
+    else
+        error("the type $(comp.type) of the companion is not supported")
+    end
+    return pf
+end
+
+function calculate_PK_params!(pf::DEFPhysicalFramework)
+	alpha0 = pf.theory.alpha0
+	beta0 = pf.theory.beta0
+	Pb = pf.bnsys.K_params.Pb * d
+	e = pf.bnsys.K_params.e0
+	x = pf.bnsys.K_params.x0
+	m1 = pf.bnsys.psr.mass * M_sun
+	m2 = pf.bnsys.comp.mass * M_sun
+	m = m1 + m2
+
+	m2_bare = m2/(1+alpha0^2)
+	alphaA, betaA, kA = pf.bnsys.psr.alphaA, pf.bnsys.psr.betaA, pf.bnsys.psr.kA
+    alphaB, betaB, kB = pf.bnsys.comp.alphaA, pf.bnsys.comp.betaA, pf.bnsys.comp.kA
+
+	G = G_CAV / (1+alpha0^2)
+
+	GAB = G*(1 + alphaA*alphaB)
+
+	n = 2*pi/Pb
+
+    gamma=(e*m2*(m + alphaB*kA*m + m2 + alphaA*alphaB*m2)*((GAB*m*n)/c^3)^(2/3))/(m^2*(n + alphaA*alphaB*n))  
+
+    k = (((-6 + alphaA*(2*alphaB*(-2 + alphaA*alphaB) + alphaA*betaB))*m + (alphaB^2*betaA - alphaA^2*betaB)*m2)*((GAB*m*n)/c^3)^(2/3))/(2. *(1 + alphaA*alphaB)^2*(-1 + e^2)*m)
+
+    s = (c*m*x)/(((GAB*m)/n^2)^(1/3)*(m2 - (m2*(18 - (20*alphaA*alphaB)/(1 + alphaA*alphaB) - (2*m2)/m + (2*m2^2)/m^2)*((GAB*m*n)/c^3)^(2/3))/6.))
+
+#    s = c*(m*n*x)/(m2*(GAB*m*n)^(1/3))
+
+    Pbdot_m = (-3*e^2*(4 + e^2)*m1*m2*(alphaA + alphaB*((5/3) + betaA/(1 + alphaA*alphaB)) + (alphaA*betaB)/(1 + alphaA*alphaB) + (2*(alphaA - alphaB)*m2)/(3. *m))^2*((GAB*m*n)/c^3)^(5/3)*pi)/(4. *(1 + alphaA*alphaB)*(1 - e^2)^3.5*m^2)
+
+    Pbdot_d = (2*m1*m2*(((alphaA - alphaB)^2*(-2 + e^2 + e^4)*GAB*m*n)/(2. *c^3) - (2*(alphaA - alphaB)*(((1 + alphaA*alphaB)*(32 + 124*e^2 + 19*e^4)*(m - 2*m2)*(alphaA*m1 + alphaB*m2))/ 4. + 5*(1 + 3*e^2 + (3*e^4)/8.)*m*(alphaA*betaB*m1 - alphaB*betaA*m2))* ((GAB*m*n)/c^3)^(5/3))/(5. *(1 + alphaA*alphaB)*m^2))*pi)/ ((1 + alphaA*alphaB)*(1 - e^2)^3.5*m^2)
+
+    Pbdot_qg = (-2*(96 + 292*e^2 + 37*e^4)*m1*m2*((GAB*m*n)/c^3)^(5/3)*pi)/(5. *(1 - e^2)^3.5*m*(m + alphaA*alphaB*m))
+
+    Pbdot_qphi = -((96 + 292*e^2 + 37*e^4)*m1*m2*(alphaB*m1 + alphaA*m2)^2*((GAB*m*n)/c^3)^(5/3)*pi)/(15. *(1 + alphaA*alphaB)*(1 - e^2)^3.5*m^4)
+
+    Pbdot = Pbdot_m + Pbdot_d + Pbdot_qg + Pbdot_qphi
+
+#    println(alphaA, " ", betaA, " ", kA)
+#    println(alphaB, " ", betaB, " ", kB)
+#    println(Pbdot_m, " ", Pbdot_d, " ", Pbdot_qg, " ", Pbdot_qphi)
+
+    r =  G*m2_bare / c^3
+#	r =  G*m2 / c^3
+
+    pf.bnsys.PK_params = (k = k, gamma = gamma, Pbdot = Pbdot, r = r, s = s)
+
+	return pf
+end
+
+function interpolate_bnsys!(pf::DEFPhysicalFramework)
+    interpolate_psr!(pf)
+    interpolate_comp!(pf)
+    calculate_PK_params!(pf)
     return pf
 end
 
