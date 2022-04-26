@@ -145,10 +145,10 @@ mutable struct Object
     betaA::Float64
     kA::Float64
     function Object(type::Symbol)
-        return new(type, 0.0, 0.0, 0.0, 0.0)
+        return new(type)
     end
     function Object(type::Symbol, mass::Float64)
-        return new(type, mass, 0.0, 0.0, 0.0)
+        return new(type, mass)
     end
 end
 
@@ -158,10 +158,12 @@ mutable struct BinarySystem
     K_params::KType
     PK_params::PKType
     function BinarySystem(PSR::Object, Comp::Object)
-        return new(PSR, Comp, KType(zeros(5)), PKType(zeros(5)))
+        return new(PSR, Comp)
+#        return new(PSR, Comp, KType(zeros(5)), PKType(zeros(5)))
     end
     function BinarySystem(PSR_type::Symbol, Comp_type::Symbol)
-        return new(Object(PSR_type), Object(Comp_type), KType(zeros(5)), PKType(zeros(5)))
+#        return new(Object(PSR_type), Object(Comp_type), KType(zeros(5)), PKType(zeros(5)))
+        return new(Object(PSR_type), Object(Comp_type))
     end
 end
 
@@ -188,12 +190,11 @@ mutable struct DEFPhysicalFramework <: PhysicalFramework
     theory::DEF
     eosname::Symbol
     grid::DEFGrid
-#    mgrid::DEFMassGrid
     bnsys::BinarySystem
     sets::Settings
+    mgrid::DEFMassGrid
     function DEFPhysicalFramework(theory::DEF, eosname::Symbol, bnsys::BinarySystem, sets::Settings)
         grid = read_DEFGrid(eosname, sets.path_to_grids)
-        mgrid = 
         return(new(theory, eosname, grid, bnsys, sets))
     end
 end
