@@ -71,7 +71,7 @@ end
 function interpolate_DEFMassGrid(grid::DEFGrid, alpha0, beta0)
 
     if !(grid.alpha0[1] <= alpha0 <= grid.alpha0[end]) || !(grid.beta0[1] <= beta0 <= grid.beta0[end])
-        error("interpolation for alpha0=$alpha0, beta0=$beta0 is out of possible range")
+        error("interpolation for alpha0=$alpha0, beta0=$beta0 is out of possible rnge")
     end
 
 #    i_alpha0 = searchsortedfirst(grid.alpha0, alpha0)
@@ -121,7 +121,7 @@ end
 
 function interpolate_NS(mgrid::DEFMassGrid, mA)
     if !(mgrid.mA[1] <= mA <= mgrid.mA[end])
-        error("interpolation for mA=$mA is out of possible range")
+        error("interpolation for mA=$mA is out of possible rnge")
     end
 
     i_mA = 1
@@ -138,9 +138,13 @@ function interpolate_NS(mgrid::DEFMassGrid, mA)
     return (alphaA = alphaA, betaA = betaA, kA = kA)
 end
 
-KType = NamedTuple{(:Pb, :T0, :e0, :omega0, :x0), NTuple{5, Float64}}
+K_list = (:Pb, :T0, :e0, :omega0, :x0)
+PK_list = (:k, :gamma, :Pbdot, :r, :s)
+X_list = (:m2, :q)
 
-PKType = NamedTuple{(:k, :gamma, :Pbdot, :r, :s), NTuple{5, Float64}}
+KType = NamedTuple{K_list, NTuple{length(K_list), Float64}}
+PKType = NamedTuple{PK_list, NTuple{length(PK_list), Float64}}
+XType = NamedTuple{X_list, NTuple{length(X_list), Float64}}
 
 mutable struct Object
     type::Symbol
@@ -162,6 +166,7 @@ mutable struct BinarySystem
     name::String
     K_params::KType
     PK_params::PKType
+    X_params::XType
     function BinarySystem(psr::Object, comp::Object)
         return new(psr, comp)
     end
@@ -172,9 +177,9 @@ end
 
 function Base.show(io::IO, bnsys::BinarySystem)
 	println(io, "Pulsar: ", bnsys.psr)
-	println(io, "Companion: ", bnsys.comp)
-	println(io, "Keplerian parameters: ", bnsys.K_params)
-	println(io, "Post-Keplerian parameters: ", bnsys.PK_params)
+	println(io, "Compnion: ", bnsys.comp)
+	println(io, "Keplerin parameters: ", bnsys.K_params)
+	println(io, "Post-Keplerin parameters: ", bnsys.PK_params)
 	return nothing
 end
 
@@ -219,26 +224,38 @@ function read_grid!(pf::DEFPhysicalFramework)
 end
 
 function interpolate_mgrid!(pf::DEFPhysicalFramework)
+    if pf.theory.alpha0 == 0 && pf.theory.beta0 == 0
+        println("No interpolation for the GR")
+        return pf
+    end
     pf.mgrid = interpolate_DEFMassGrid(pf.grid, pf.theory.alpha0, pf.theory.beta0)
     return pf
 end
 
 function interpolate_psr!(pf::DEFPhysicalFramework)
     psr = pf.bnsys.psr
-    psr.alphaA, psr.betaA, psr.kA = interpolate_NS(pf.mgrid, psr.mass)
+    if pf.theory.alpha0 == 0.0 && pf.theory.beta0 == 0.0
+        psr.alphaA, psr.betaA, psr.kA = 0.0, 0.0, 0.0
+    else
+        psr.alphaA, psr.betaA, psr.kA = interpolate_NS(pf.mgrid, psr.mass)
+    end
     return pf
 end
 
 function interpolate_comp!(pf::DEFPhysicalFramework)
     comp = pf.bnsys.comp
     if comp.type == :NS
-        comp.alphaA, comp.betaA, comp.kA = interpolate_NS(pf.mgrid, comp.mass)
+        if pf.theory.alpha0 == 0.0 && pf.theory.beta0 == 0.0
+            comp.alphaA, comp.betaA, comp.kA = 0.0, 0.0, 0.0
+        else
+            comp.alphaA, comp.betaA, comp.kA = interpolate_NS(pf.mgrid, comp.mass)
+        end
     elseif  comp.type == :BH
         comp.alphaA, comp.betaA, comp.kA = 0.0, 0.0, 0.0
     elseif  comp.type == :WD
         comp.alphaA, comp.betaA, comp.kA = pf.theory.alpha0, pf.theory.beta0, 0.0
     else
-        error("the type $(comp.type) of the companion is not supported")
+        error("the type $(comp.type) of the compnion is not supported")
     end
     return pf
 end
@@ -283,7 +300,7 @@ function calculate_PK_params!(pf::DEFPhysicalFramework)
 
 #    println(alphaA, " ", betaA, " ", kA)
 #    println(alphaB, " ", betaB, " ", kB)
-#    println(Pbdot_m, " ", Pbdot_d, " ", Pbdot_qg, " ", Pbdot_qphi)
+#    println(m1/M_sun, " ", m2/M_sun, " ", Pbdot_m, " ", Pbdot_d, " ", Pbdot_qg, " ", Pbdot_qphi)
 
     r =  G*m2_bare / c^3
 #	r =  G*m2 / c^3
@@ -293,10 +310,20 @@ function calculate_PK_params!(pf::DEFPhysicalFramework)
 	return pf
 end
 
+function calculate_X_params!(pf::DEFPhysicalFramework)
+    m2 = pf.bnsys.comp.mass
+    q = pf.bnsys.psr.mass / pf.bnsys.comp.mass
+    pf.bnsys.X_params = (m2 = m2, q = q)
+	return pf
+end
+
+
+
 function interpolate_bnsys!(pf::DEFPhysicalFramework)
     interpolate_psr!(pf)
     interpolate_comp!(pf)
     calculate_PK_params!(pf)
+    calculate_X_params!(pf)
     return pf
 end
 
