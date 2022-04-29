@@ -120,12 +120,12 @@ function interpolate_DEFMassGrid(grid::DEFGrid, alpha0, beta0)
 end
 
 function interpolate_NS(mgrid::DEFMassGrid, mA)
-    if !(mgrid.mA[1] <= mA <= mgrid.mA[end])
-        error("interpolation for mA=$mA is out of possible rnge")
-    end
+#    if !(mgrid.mA[1] <= mA <= mgrid.mA[end])
+#        error("interpolation for mA=$mA is out of possible range [$(mgrid.mA[1]), $(mgrid.mA[end])]")
+#    end
 
     i_mA = 1
-    for i in 1:mgrid.N_pc
+    for i in 1:mgrid.N_pc-1
         if mgrid.mA[i] <= mA
             i_mA = i
         end
