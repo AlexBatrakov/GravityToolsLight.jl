@@ -66,6 +66,12 @@ struct DEFMassGrid
     betaA::Vector{Float64}
     kA::Vector{Float64}
     mA::Vector{Float64}
+    mAmax::Float64
+    i_mAmax::Int64
+    function DEFMassGrid(eosname, N_pc, alpha0, beta0, alphaA, betaA, kA, mA)
+        mAmax, i_mAmax = findmax(mA)
+        return new(eosname, N_pc, alpha0, beta0, alphaA, betaA, kA, mA, mAmax, i_mAmax)
+    end
 end
 
 function interpolate_DEFMassGrid(grid::DEFGrid, alpha0, beta0)
@@ -120,12 +126,15 @@ function interpolate_DEFMassGrid(grid::DEFGrid, alpha0, beta0)
 end
 
 function interpolate_NS(mgrid::DEFMassGrid, mA)
+
+
+
 #    if !(mgrid.mA[1] <= mA <= mgrid.mA[end])
 #        error("interpolation for mA=$mA is out of possible range [$(mgrid.mA[1]), $(mgrid.mA[end])]")
 #    end
 
     i_mA = 1
-    for i in 1:mgrid.N_pc-1
+    for i in 1:mgrid.i_mAmax-1
         if mgrid.mA[i] <= mA
             i_mA = i
         end
@@ -277,6 +286,8 @@ function calculate_PK_params!(pf::DEFPhysicalFramework)
 	G = G_CAV / (1+alpha0^2)
 
 	GAB = G*(1 + alphaA*alphaB)
+
+    GAB = abs(GAB) #the check of the sign
 
 	n = 2*pi/Pb
 
