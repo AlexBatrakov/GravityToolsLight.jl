@@ -44,8 +44,8 @@ function find_initial_masses(ct::ClassicalTest, pf::DEFPhysicalFramework)
     println(PK_first, " ", PK_second)
 
     function find_intersection!(F, x)
-        pf.bnsys.psr.mass = x[1]
-        pf.bnsys.comp.mass = x[2]
+        pf.bnsys.psr.mass = abs(x[1])
+        pf.bnsys.comp.mass = abs(x[2])
         interpolate_bnsys!(pf)
         F[1] = (pf.bnsys.PK_params[PK_first] / ct.PK_params_obs[PK_first].val) - 1.0 #/ ct.PK_params_sigma[PK_first]
         F[2] = (pf.bnsys.PK_params[PK_second] / ct.PK_params_obs[PK_second].val) - 1.0 #/ ct.PK_params_sigma[PK_first]
@@ -112,7 +112,7 @@ function calculate!(ct::ClassicalTest, pf::DEFPhysicalFramework)
         find_best_masses(ct, pf)
         chisqr = get_chisqr(ct, pf)
         println("alpha0 = $(pf.theory.alpha0), beta0 = $(pf.theory.beta0), m1 = $(pf.bnsys.psr.mass), m2 = $(pf.bnsys.comp.mass), chisqr = $chisqr")
-        return ((:chisqr, :m1, :m2),  (chisqr, pf.bnsys.psr.mass, pf.bnsys.comp.mass) )
+        return ((:chisqr, :m1, :m2, :Pbdot),  (chisqr, pf.bnsys.psr.mass, pf.bnsys.comp.mass, pf.bnsys.PK_params.Pbdot) )
     end
 
     lvl = quantile(Chisq(2), ct.CL)
@@ -172,7 +172,7 @@ ct_dataset["J2222−0137"] = ClassicalTest(
     x0 = 10.8480213 ± 0.0000002),
     (k = (0.09607 ± 0.00048) / 360 * 2.445759995471/365.25,
     gamma = 0.0 ± 0.0,
-   Pbdot = -0.0143e-12 ± 0.0076e-12,
-#    Pbdot = -0.0080e-12 ± 0.0076e-12,
+#   Pbdot = -0.0143e-12 ± 0.0076e-12,
+    Pbdot = -0.0080e-12 ± 0.0076e-12,
     r = (1.312 ± 0.009)*G*M_sun/c^3,
     s = 0.996623 ± 0.000115))

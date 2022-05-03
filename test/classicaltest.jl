@@ -1,6 +1,7 @@
 using GravityTools
 using Measurements
 using PyPlot
+using JLD
 pygui(true)
 
 eosname = :MPA1
@@ -70,7 +71,6 @@ pf.theory.beta0  = -0.0000
 interpolate_mgrid!(pf)
 
 ct = ct_dataset["Double Pulsar"]
-ct = ct_dataset["J2222−0137"]
 pf.bnsys.K_params = ct.K_params_obs
 
 pf.bnsys.psr.mass = 1.338185
@@ -152,21 +152,79 @@ cs2 = ax.contour(grid_ddstg.y, grid_ddstg.x, grid_ddstg.value[:chisqr] .- grid_d
 plot([], [], label="DDSTG test", color="red")
 legend(fontsize=12)
 
-#fig, ax = subplots()
-#pclm = ax.scatter(ct.grid.value[:m1] .+ ct.grid.value[:m2] .- 2.587053, ct.grid.value[:m1] .- ct.grid.value[:m2] .- 0.089317, alpha=0.4, c=ct.grid.value[:chisqr].-ct.grid.params[:chisqr_min], norm = matplotlib.colors.Normalize(vmin=0.0,vmax=20), linewidth=0.7)
-#cbar = colorbar(pclm)
-#cbar.set_label(L"$\Delta\chi^{2}$")
-#xlabel(L"m_{\mathrm{p}},\, [M_{\odot}]", size=16)
-#ylabel(L"m_{\mathrm{c}},\, [M_{\odot}]", size=16)
-#tight_layout()
-#
-#
-#fig, ax = subplots()
-#pclm = ax.scatter(ct.grid.value[:m1] .+ ct.grid.value[:m2], ct.grid.value[:chisqr], alpha=0.4, c=ct.grid.value[:chisqr].-ct.grid.params[:chisqr_min], norm = matplotlib.colors.Normalize(vmin=0.0,vmax=20), linewidth=0.7)
-#cbar = colorbar(pclm)
-#cbar.set_label(L"$\Delta\chi^{2}$")
-#xlabel(L"m_{\mathrm{p}},\, [M_{\odot}]", size=16)
-#ylabel(L"m_{\mathrm{c}},\, [M_{\odot}]", size=16)
-#tight_layout()
+fig, ax = subplots()
+pclm = ax.pcolormesh(ct.grid.y, ct.grid.x, ct.grid.value[:chisqr] .- ct.grid.params[:chisqr_min] .- (grid_ddstg.value[:chisqr] .- grid_ddstg.params[:chisqr_min]), cmap="RdBu", norm = matplotlib.colors.Normalize(vmin=-1,vmax=1), rasterized=true)
+cbar = colorbar(pclm)
+
+fig, ax = subplots()
+pclm = ax.pcolormesh(ct.grid.y, ct.grid.x, ct.grid.value[:m2] .- grid_ddstg.value[:MB], cmap="RdBu", norm = matplotlib.colors.Normalize(vmin=-0.02,vmax=0.02), rasterized=true)
+cbar = colorbar(pclm)
+
+#-------------------------------------------------------------------------------------
+
+fig, ax = subplots()
+pclm = ax.scatter(grid_ddstg.value[:chisqr] .- grid_ddstg.params[:chisqr_min], ct.grid.value[:chisqr] .- ct.grid.params[:chisqr_min] .- (grid_ddstg.value[:chisqr] .- grid_ddstg.params[:chisqr_min]), alpha=0.1, linewidth=0.05, c=grid_ddstg.value[:BETA0], norm = matplotlib.colors.Normalize(), rasterized=true)
+cbar = colorbar(pclm)
+cbar.set_alpha(1)
+cbar.draw_all()
+cbar.set_label(L"$\beta_0$", size=16)
+ax.set_xlabel(L"\delta \chi^2_{\mathrm{DDSTG}}", size=16)
+ax.set_ylabel(L"\delta \chi^2_{\mathrm{PK}} - \delta \chi^2_{\mathrm{DDSTG}}", size=16)
+legend(fontsize=12)
+xlim(0.0,10.0)
+ylim(-2.0,1.0)
+tight_layout()
+
+fig, ax = subplots()
+pclm = ax.scatter(grid_ddstg.value[:chisqr] .- grid_ddstg.params[:chisqr_min], ct.grid.value[:chisqr] .- ct.grid.params[:chisqr_min] .- (grid_ddstg.value[:chisqr] .- grid_ddstg.params[:chisqr_min]), alpha=0.1, linewidth=0.05, c=-grid_ddstg.value[:ALPHA0], norm = matplotlib.colors.LogNorm(), rasterized=true)
+cbar = colorbar(pclm)
+cbar.set_alpha(1)
+cbar.draw_all()
+cbar.set_label(L"$|\alpha_0|$", size=16)
+ax.set_xlabel(L"\delta \chi^2_{\mathrm{DDSTG}}", size=16)
+ax.set_ylabel(L"\delta \chi^2_{\mathrm{PK}} - \delta \chi^2_{\mathrm{DDSTG}}", size=16)
+legend(fontsize=12)
+xlim(0.0,10.0)
+ylim(-2.0,1.0)
+tight_layout()
+
+#-------------------------------------------------------------------------------------
+
+fig, ax = subplots()
+pclm = ax.scatter(ct.grid.value[:m1] .+ ct.grid.value[:m2], ct.grid.value[:m1] .- ct.grid.value[:m2], alpha=0.4, c=ct.grid.value[:chisqr].-ct.grid.params[:chisqr_min], norm = matplotlib.colors.Normalize(vmin=0.0,vmax=20), linewidth=0.7)
+cbar = colorbar(pclm)
+cbar.set_label(L"$\Delta\chi^{2}$")
+xlabel(L"m_{\mathrm{p}},\, [M_{\odot}]", size=16)
+ylabel(L"m_{\mathrm{c}},\, [M_{\odot}]", size=16)
+tight_layout()
 
 
+fig, ax = subplots()
+pclm = ax.scatter(ct.grid.value[:m1] .+ ct.grid.value[:m2], ct.grid.value[:chisqr], alpha=0.4, c=ct.grid.value[:chisqr].-ct.grid.params[:chisqr_min], norm = matplotlib.colors.Normalize(vmin=0.0,vmax=20), linewidth=0.7)
+cbar = colorbar(pclm)
+cbar.set_label(L"$\Delta\chi^{2}$")
+xlabel(L"m_{\mathrm{p}},\, [M_{\odot}]", size=16)
+ylabel(L"m_{\mathrm{c}},\, [M_{\odot}]", size=16)
+tight_layout()
+
+
+
+#-------------------------------------------------------------------------------------
+
+m_arr = collect(LinRange(0.05, 5.0, 5000))
+alphaA_arr = Array{Float64}(undef, 5000)
+theory = DEF(-0.01778279410038923, -6.0)
+eosname = :MPA1
+bnsys = BinarySystem(:NS, :WD)
+sets = Settings("/Users/abatrakov/Documents/PhD_work/projects/computed_grids")
+pf = DEFPhysicalFramework(theory, eosname, bnsys, sets)
+read_grid!(pf)
+interpolate_mgrid!(pf)
+
+for i in 1:5000
+    pf.bnsys.psr.mass = m_arr[i]
+    interpolate_psr!(pf)
+    alphaA_arr[i] = pf.bnsys.psr.alphaA
+end
+plot(pf.mgrid.mA, pf.mgrid.alphaA)
+plot(m_arr, alphaA_arr, ".")
