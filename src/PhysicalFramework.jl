@@ -77,7 +77,7 @@ end
 function interpolate_DEFMassGrid(grid::DEFGrid, alpha0, beta0)
 
     if !(grid.alpha0[1] <= alpha0 <= grid.alpha0[end]) || !(grid.beta0[1] <= beta0 <= grid.beta0[end])
-        error("interpolation for alpha0=$alpha0, beta0=$beta0 is out of possible rnge")
+        error("interpolation for alpha0=$alpha0, beta0=$beta0 is out of possible range")
     end
 
 #    i_alpha0 = searchsortedfirst(grid.alpha0, alpha0)
@@ -97,7 +97,7 @@ function interpolate_DEFMassGrid(grid::DEFGrid, alpha0, beta0)
         end
     end
 
-    println("i_alpha0 = $i_alpha0, i_beta0 = $i_beta0")
+#    println("i_alpha0 = $i_alpha0, i_beta0 = $i_beta0")
 
     x_alpha0 = (alpha0 - grid.alpha0[i_alpha0]) / (grid.alpha0[i_alpha0+1] - grid.alpha0[i_alpha0])
     x_beta0 = (beta0 - grid.beta0[i_beta0]) / (grid.beta0[i_beta0+1] - grid.beta0[i_beta0])
@@ -148,8 +148,8 @@ function interpolate_NS(mgrid::DEFMassGrid, mA)
 end
 
 K_list = (:Pb, :T0, :e0, :omega0, :x0)
-PK_list = (:k, :gamma, :Pbdot, :r, :s)
-X_list = (:m2, :q)
+PK_list = (:k, :gamma, :Pbdot, :r, :s, :h3, :varsigma, :dtheta)
+X_list = (:m2, :q, :deltaN)
 
 KType = NamedTuple{K_list, NTuple{length(K_list), Float64}}
 PKType = NamedTuple{PK_list, NTuple{length(PK_list), Float64}}
@@ -162,11 +162,20 @@ mutable struct Object
     betaA::Float64
     kA::Float64
     function Object(type::Symbol)
-        return new(type)
+        return new(type, 0.0, 0.0, 0.0, 0.0)
     end
     function Object(type::Symbol, mass::Float64)
-        return new(type, mass)
+        return new(type, mass, 0.0, 0.0, 0.0)
     end
+end
+
+function Base.show(io::IO, obj::Object)
+	println(io, "Type of object: ", obj.type)
+	println(io, "   Mass (M⊙): ", obj.mass)
+	println(io, "   alphaA: ", obj.alphaA)
+	println(io, "   betaA: ", obj.betaA)
+    println(io, "   kA: ", obj.kA)
+	return nothing
 end
 
 mutable struct BinarySystem
@@ -185,10 +194,12 @@ mutable struct BinarySystem
 end
 
 function Base.show(io::IO, bnsys::BinarySystem)
-	println(io, "Pulsar: ", bnsys.psr)
-	println(io, "Compnion: ", bnsys.comp)
-	println(io, "Keplerin parameters: ", bnsys.K_params)
-	println(io, "Post-Keplerin parameters: ", bnsys.PK_params)
+    println(io, "Binary system:")
+	print(io,   "Pulsar:\n   ", bnsys.psr)
+	print(io,   "Companion:\n   ", bnsys.comp)
+	println(io, "Keplerian parameters:\n   ", bnsys.K_params)
+	println(io, "Post-Keplerian parameters:\n   ", bnsys.PK_params)
+    print(io,   "Extra parameters:\n   ", bnsys.X_params)
 	return nothing
 end
 
@@ -222,8 +233,7 @@ function Base.show(io::IO, pf::DEFPhysicalFramework)
 	println(io, "DEFPhysicalFramework:")
 	println(io, "Theory: ", pf.theory)
 	println(io, "EOS name: ", pf.eosname)
-	println(io, "Binary system:")
-	println(io, pf.bnsys)
+	print(io, pf.bnsys)
 	return nothing
 end
 
@@ -316,7 +326,12 @@ function calculate_PK_params!(pf::DEFPhysicalFramework)
     r =  G*m2_bare / c^3
 #	r =  G*m2 / c^3
 
-    pf.bnsys.PK_params = (k = k, gamma = gamma, Pbdot = Pbdot, r = r, s = s)
+    varsigma = (1.0 - sqrt(1 - s^2 >= 0 ? 1 - s^2 : NaN))/s
+    h3 = r * varsigma^3
+
+    dtheta = (GAB*m*n/c^3)^(2/3) / (m^2 * (1+alphaA*alphaB)) * ((3.5-0.5*alphaA*alphaB)*m1^2 + (6-alphaA*alphaB-kA*alphaB)*m1*m2 + (2-alphaA*alphaB-kA*alphaB)*m2^2)
+
+    pf.bnsys.PK_params = (k = k, gamma = gamma, Pbdot = Pbdot, r = r, s = s, h3 = h3, varsigma = varsigma, dtheta = dtheta)
 
 	return pf
 end
@@ -324,7 +339,8 @@ end
 function calculate_X_params!(pf::DEFPhysicalFramework)
     m2 = pf.bnsys.comp.mass
     q = pf.bnsys.psr.mass / pf.bnsys.comp.mass
-    pf.bnsys.X_params = (m2 = m2, q = q)
+    deltaN = pf.theory.alpha0*(pf.bnsys.psr.alphaA - pf.theory.alpha0)
+    pf.bnsys.X_params = (m2 = m2, q = q, deltaN = deltaN)
 	return pf
 end
 
