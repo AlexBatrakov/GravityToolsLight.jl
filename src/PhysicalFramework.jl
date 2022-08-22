@@ -305,6 +305,7 @@ function calculate_PK_params!(pf::DEFPhysicalFramework)
 
     k = (((-6 + alphaA*(2*alphaB*(-2 + alphaA*alphaB) + alphaA*betaB))*m + (alphaB^2*betaA - alphaA^2*betaB)*m2)*((GAB*m*n)/c^3)^(2/3))/(2. *(1 + alphaA*alphaB)^2*(-1 + e^2)*m)
 
+
     s = (c*m*x)/(((GAB*m)/n^2)^(1/3)*(m2 - (m2*(18 - (20*alphaA*alphaB)/(1 + alphaA*alphaB) - (2*m2)/m + (2*m2^2)/m^2)*((GAB*m*n)/c^3)^(2/3))/6.))
 
 #    s = c*(m*n*x)/(m2*(GAB*m*n)^(1/3))
@@ -323,8 +324,8 @@ function calculate_PK_params!(pf::DEFPhysicalFramework)
 #    println(alphaB, " ", betaB, " ", kB)
 #    println(m1/M_sun, " ", m2/M_sun, " ", Pbdot_m, " ", Pbdot_d, " ", Pbdot_qg, " ", Pbdot_qphi)
 
-    r =  G*m2_bare / c^3
-#	r =  G*m2 / c^3
+#    r =  G*m2_bare / c^3
+	r =  G*m2 / c^3
 
     varsigma = (1.0 - sqrt(1 - s^2 >= 0 ? 1 - s^2 : NaN))/s
     h3 = r * varsigma^3

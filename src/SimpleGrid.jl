@@ -82,18 +82,29 @@ function refine_Grid(grid::SimpleGrid, get_value_func, cell_selector, calc_param
 #        end
 #    end
 
-    changes_key = true
-    while changes_key
-        changes_key = false
-        for i_cell in 1:grid.N_x-1, j_cell in 1:grid.N_y-1
-            if (calc_status[i_cell,j_cell] == false) && cell_selector(i_cell, j_cell, grid) == true
-                calculate_cell!(i_cell, j_cell, grid, grid_refined, get_value_func)
-                calc_status[i_cell,j_cell] = true
-                changes_key = true
-                calc_counter += 1
-            end
+    function recursive_refine_cell(i_cell, j_cell, calc_status, grid)
+        if (i_cell ∉ 1:grid.N_x-1) || (j_cell ∉ 1:grid.N_y-1)
+            return nothing
         end
+        if (calc_status[i_cell,j_cell] == false) && cell_selector(i_cell, j_cell, grid) == true
+            calculate_cell!(i_cell, j_cell, grid, grid_refined, get_value_func)
+            calc_status[i_cell,j_cell] = true
+            calc_counter += 1
+            recursive_refine_cell(i_cell-1, j_cell, calc_status, grid)
+            recursive_refine_cell(i_cell, j_cell-1, calc_status, grid)
+            recursive_refine_cell(i_cell+1, j_cell, calc_status, grid)
+            recursive_refine_cell(i_cell, j_cell+1, calc_status, grid)
+        end
+        return nothing
     end
+
+#    changes_key = true
+#    while changes_key
+#        changes_key = false
+        for i_cell in 1:grid.N_x-1, j_cell in 1:grid.N_y-1
+            recursive_refine_cell(i_cell, j_cell, calc_status, grid)
+        end
+#    end
 
     for i_cell in 1:grid.N_x-1, j_cell in 1:grid.N_y-1
         if (calc_status[i_cell,j_cell] == false)

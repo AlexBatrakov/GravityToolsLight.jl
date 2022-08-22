@@ -10,6 +10,7 @@ lvl_68CL = quantile(Chisq(2), 0.68)
 lvl_90CL = quantile(Chisq(2), 0.90)
 lvl_95CL = quantile(Chisq(2), 0.95)
 lvl_99CL = quantile(Chisq(2), 0.99)
+lvl_997CL = quantile(Chisq(2), 0.997)
 
 abstract type AbstractGravityTest end
 
@@ -77,20 +78,35 @@ end
 
 struct GridSetttings
     N_refinement::Int64
-    CL::Float64
-    plot_type::String
+    CL::Vector{Float64}
+    contours::Vector{Float64}
+    refinement_type::String
+    delta_chisqr_max::Float64
+    delta_chisqr_diff::Float64
+    gr_in_chisqr::Bool
+    function GridSetttings(N_refinement, CL, contours, refinement_type, delta_chisqr_max, delta_chisqr_diff, gr_in_chisqr)
+        CL = typeof(CL) == Float64 ? [CL] : CL
+        return new(N_refinement, isempty(CL) ? cdf(Chisq(2), contours) : CL, isempty(contours) ? quantile.(Chisq(2), CL) : contours, refinement_type, delta_chisqr_max, delta_chisqr_diff, gr_in_chisqr)
+    end
 end
 
 function Base.show(io::IO, gsets::GridSetttings)
     println(io, "Grid settings:")
 	println(io, "   Desired refinement level: ", gsets.N_refinement)
-    println(io, "   Desired confidence level: ", gsets.CL)
-    print(io,   "   Type of the plot: ", gsets.plot_type)
+    println(io, "   Desired confidence levels: ", gsets.CL)
+    println(io, "   Desired Δχ2 contours: ", gsets.contours)
+    println(io, "   Type of the refinements: ", gsets.refinement_type)
+    println(io, "   Maximum Δχ2 value: ", gsets.delta_chisqr_max)
+    println(io, "   Maximum difference in Δχ2 value: ", gsets.delta_chisqr_diff)
+    print(io,   "   Include GR in Δχ2 value: ", gsets.gr_in_chisqr)
 	return nothing
 end
 
-GridSetttings(;N_refinement, CL, plot_type) = GridSetttings(N_refinement, CL, plot_type)
 
+GridSetttings(;N_refinement=1, CL=Float64[], contours=Float64[], refinement_type="nice", delta_chisqr_max=10.0, delta_chisqr_diff=1.0, gr_in_chisqr=false) = GridSetttings(N_refinement, CL, contours, refinement_type, delta_chisqr_max, delta_chisqr_diff, gr_in_chisqr)
+
+
+#=
 function get_label(name)
     if name == "PBDOT"
         return L"\dot{P}_\mathrm{b}\, (10^{-12})"
@@ -118,3 +134,4 @@ function get_label(name)
         return L"\varsigma"
     end
 end
+=#

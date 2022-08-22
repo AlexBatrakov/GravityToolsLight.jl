@@ -8,7 +8,7 @@ using Measurements
 using Optim
 using StructArrays
 using Printf
-using PyPLot
+# using PyPLot
 
 include("Utils.jl")
 include("SimpleGrid.jl")
@@ -30,8 +30,9 @@ export read_DEFGrid, interpolate_DEFMassGrid, interpolate_NS
 #export MMDiagram
 #export DDSTGTest, DDSTGTestSettings, cut_ddstg_grid!
 
-export PKFramework, find_initial_masses, check_terms_in_chisqr, find_best_masses, optimize_PK_method, find_masses, obs_params_dataset
-export TempoFramework, GeneralTest, TempoSettings, GridSetttings, calculate!
+export PKFramework, find_initial_masses, check_terms_in_chisqr, find_best_masses, optimize_PK_method, find_masses, obs_params_dataset, ObsParams
+export TempoFramework, GeneralTest, TempoSettings, GridSetttings, calculate!, cut_ddstg_grid!
+export TempoParameter, get_TempoParameter, update_pf_theory!, modify_par_file, run_tempo, get_par_file_work, read_params
 
 export G_CAV, M_sun, c, d, rad
 export  lvl_1σ, lvl_2σ, lvl_3σ, lvl_4σ, lvl_5σ, lvl_6σ, lvl_7σ, lvl_68CL, lvl_90CL, lvl_95CL, lvl_99CL
