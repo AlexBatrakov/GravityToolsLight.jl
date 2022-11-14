@@ -278,6 +278,7 @@ function get_tempo_format(name, value)
     end
 end
 
+#=
 function calculate_old!(tf::TempoFramework; add_refinement=0)
 
     par_file_init = tf.tsets.par_file_init
@@ -328,7 +329,7 @@ function calculate_old!(tf::TempoFramework; add_refinement=0)
         tf.grid.params[:chisqr_min] = tf.grid.params[:chisqr_min] < chisqr ? tf.grid.params[:chisqr_min] : chisqr
         @printf "%s = %10.6f, %s = %10.6f, χ2 = %8.3f, Δχ2 = %8.3f\n" tf.test.param1.name param1 tf.test.param2.name param2 chisqr chisqr-tf.grid.params[:chisqr_min]
 #        temp_dict = read_params(Dict(:A1=>0.0, :E=>0.0, :T0=>0.0, :PB=>0.0, :OM=>0.0, :OMDOT=>0.0, :GAMMA=>0.0, :PBDOT=>0.0, :SINI=>0.0, :DTHETA=>0.0, :XDOT=>0.0, :DR=>0.0,:MA=>0.0, :MB =>0.0, :ALPHA0=>0.0, :BETA0=>0.0, :ALPHAA=>0.0, :BETAA=>0.0, :kA=>0.0), par_file_out)
-    temp_dict = read_params(Dict(:A1=>0.0, :E=>0.0, :T0=>0.0, :PB=>0.0, :OM=>0.0, :OMDOT=>0.0, :GAMMA=>0.0, :PBDOT=>0.0, :SINI=>0.0, :H3 => 0.0, :VARSIGMA => 0.0, :DTHETA=>0.0, :XDOT=>0.0, :XPBDOT=>0.0, :DR=>0.0, :MTOT=>0.0, :M2 =>0.0, :ALPHA0=>0.0, :BETA0=>0.0, :ALPHAA=>0.0, :BETAA=>0.0, :kA=>0.0), par_file_out)
+        temp_dict = read_params(Dict(:A1=>0.0, :E=>0.0, :T0=>0.0, :PB=>0.0, :OM=>0.0, :OMDOT=>0.0, :GAMMA=>0.0, :PBDOT=>0.0, :SINI=>0.0, :H3 => 0.0, :VARSIGMA => 0.0, :DTHETA=>0.0, :XDOT=>0.0, :XPBDOT=>0.0, :DR=>0.0, :MTOT=>0.0, :M2 =>0.0, :ALPHA0=>0.0, :BETA0=>0.0, :ALPHAA=>0.0, :BETAA=>0.0, :kA=>0.0), par_file_out)
         ddstg_names = tuple(:chisqr, keys(temp_dict)...)
         ddstg_values = tuple(chisqr, values(temp_dict)...)
         return (ddstg_names, ddstg_values)
@@ -389,6 +390,7 @@ function calculate_old!(tf::TempoFramework; add_refinement=0)
     cut_ddstg_grid!(tf.grid)
     return tf
 end
+=#
 
 struct TempoParameter{T}
     name::String

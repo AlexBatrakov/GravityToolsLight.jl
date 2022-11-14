@@ -14,8 +14,8 @@ pygui(true)
 test = GeneralTest(
     psrname = "J2222-0137",
     eosname = "MPA1",
-    param1 = (name = "log10alpha0", min = -4.0, max = -1.0, N = 9),
-    param2 = (name = "beta0", min = -6.0, max = 6.0, N = 9)
+    param1 = (name = "log10alpha0", min = -4.0, max = -1.0, N = 2),
+    param2 = (name = "beta0", min = -6.0, max = 6.0, N = 2)
     )
 
 tsets = TempoSettings(
@@ -23,14 +23,14 @@ tsets = TempoSettings(
     tim_file = "J1141-6545_until_2018.tim",
     add_flag = "-nobs 22000 -newpar",
     fit_XPBDOT = false,
-    nits_first_step = 5,
+    nits_first_step = 3,
     gain_fisrt_step = 1.0
     )
 
 gsets = GridSetttings(
-    N_refinement = 5,
+    N_refinement = 3,
     CL = [0.90],
-    refinement_type = "nice",
+    refinement_type = "contour",
     delta_chisqr_max = 10,
     delta_chisqr_diff = 1.0,
     gr_in_chisqr = true
