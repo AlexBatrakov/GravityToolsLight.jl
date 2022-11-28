@@ -169,8 +169,8 @@ obs_params = obs_params_dataset["J2222−0137_DDFWHE"]
 obs_params = obs_params_dataset["J2222−0137_DDK"]
 obs_params = obs_params_dataset["J2222−0137_Guo_ELL1H+"]
 obs_params = obs_params_dataset["J2222−0137_DD"]
-obs_params = obs_params_dataset["J2222−0137_DDK_XDOT"]
-obs_params = obs_params_dataset["J2222−0137_sim_DD"]
+#obs_params = obs_params_dataset["J2222−0137_DDK_XDOT"]
+#obs_params = obs_params_dataset["J2222−0137_sim_DD"]
 
 pf.bnsys.K_params = obs_params.K
 
@@ -193,14 +193,14 @@ test = GeneralTest(
     eosname = "MPA1",
 #    param1 = (name = "log10alpha0", min = -4.0, max = -1.0, N = 9),
 #    param2 = (name = "beta0", min = -6.0, max = 6.0, N = 9)
-    alpha0 = -0.1,
-    beta0 =  -1.9,
+    alpha0 = -0.0001,
+    beta0 =  -4.5,
 #    param2 = (name = "PBDOT", min = -0.00, max = -0.03, N = 9),
 #    param1 = (name = "OMDOT", min = 0.0963854 - 3*0.0004908, max = 0.0963854 +3*0.0004908, N = 9),
 #    param2 = (name = "Pbdot", min = -0.32e-12, max = -0.45e-12, N = 9),
 #    param1 = (name = "gamma", min = 0.0004, max = 0.0011, N = 9),
     param1 = (name = "m2", min = 0.0, max = 3.0, N = 9),
-    param2 = (name = "m1", min = 0.8, max = 2.3, N = 9),
+    param2 = (name = "m1", min = 0.0, max = 3.0, N = 9),
 #    param2 = (name = "s", min = 0.1, max = 1.0, N = 9)
     )
 
@@ -299,8 +299,22 @@ cbar.set_label(L"$\Delta\chi^{2}$")
 #ax.invert_xaxis()
 tight_layout()
 
-savefig("/Users/abatrakov/Documents/PhD_work/projects/plots/J2222-0137_obs_chisqr_90CL.pdf", dpi=600)
+savefig("/Users/abatrakov/Documents/PhD_work/projects/plots/J2222-0137_obs_chisqr_90CL.pdf", dpi=600, bbox_inches="tight")
 
+#-------------------------------------------------------------------------------------
+
+grid_DDSTG = load("/Users/abatrakov/Documents/PhD_work/projects/J2222-0137/saves_old/grid_J2222-0137_contour_90CL.jld", "grid")
+
+cm = ColorMap(ColorSchemes.:OrRd_7.colors, 7)
+fig2, ax2 = subplots()
+pclm2 = ax2.pcolormesh(grid_DDSTG.y, grid_DDSTG.x, grid_DDSTG.ref_level, cmap=cm, rasterized=true)
+cbar2 = colorbar(pclm2)
+cbar2.set_label(L"\mathrm{level\ of\ refinement}", size=16)
+#ax2.set_title("$(psr_name) TOAs; $EOS eos", size=16)
+ax2.set_xlabel(L"\beta_0", size=16)
+ax2.set_ylabel(L"\log_{10}|\alpha_0|", size=16)
+tight_layout()
+savefig("/Users/abatrakov/Documents/PhD_work/projects/plots/J2222-0137_ref_level.pdf", dpi=600, bbox_inches="tight")
 
 #-------------------------------------------------------------------------------------
 
@@ -350,6 +364,7 @@ legend(fontsize=12)
 xlim(-0.5,10.0)
 ylim(-3.0,0.5)
 tight_layout()
+savefig("/Users/abatrakov/Documents/PhD_work/projects/plots/J2222-0137_DDSTG_PK_DD_chisqr_comp.pdf", dpi=600, bbox_inches="tight")
 
 fig, ax = subplots()
 rc("mathtext",fontset="cm")
@@ -433,3 +448,34 @@ legend(fontsize=11)
 ylim(-4.0,-1.0)
 tight_layout()
 savefig("/Users/abatrakov/Documents/PhD_work/projects/plots/J2222-0137_sim_chisqr_90CL.pdf", dpi=600)
+
+#-------------------------------------------------------------------------------------
+
+grid_obs = load("/Users/abatrakov/Documents/PhD_work/projects/Huanchen/grid_J2222-0137_contour_90CL.jld", "grid")
+grid_all = load("/Users/abatrakov/Documents/PhD_work/projects/Huanchen/grid_J2222-0137_sim_sep_all_nice_90CL.jld", "grid")
+grid_fast = load("/Users/abatrakov/Documents/PhD_work/projects/Huanchen/grid_J2222-0137_sim_sep_fast_contour_90CL.jld", "grid")
+grid_mk = load("/Users/abatrakov/Documents/PhD_work/projects/Huanchen/grid_J2222-0137_sim_sep_mk_contour_90CL.jld", "grid")
+grid_epta = load("/Users/abatrakov/Documents/PhD_work/projects/Huanchen/grid_J2222-0137_sim_sep_epta_contour_90CL.jld", "grid")
+
+cm = ColorMap(ColorSchemes.okabe_ito.colors, 8)
+rc("mathtext",fontset="cm")
+rc("font", family="serif", size=12)
+fig, ax = subplots()
+pclm = ax.pcolormesh(grid_all.y, grid_all.x, grid_all.value[:chisqr_cut] .- grid_all.params[:chisqr_min], cmap="Blues_r", norm = matplotlib.colors.Normalize(vmin=0.0,vmax=25), rasterized=true)
+cbar = colorbar(pclm)
+cbar.set_label(L"$\Delta\chi^{2}$")
+ax.axhline(y=log10(3.4e-3), color="gray", label=L"\mathrm{Cassini}", zorder=5, ls="--")
+plot_contour(ax, grid_obs,  lvl_90CL, color=cm(2), label=L"\mathrm{Real\ data}", N_smooth=50, ls="-.")
+plot_contour(ax, grid_epta, lvl_90CL, color=cm(1), label=L"\mathrm{3ERT}", N_smooth=50, ls=(0, (3, 1, 1, 1)))
+plot_contour(ax, grid_mk,   lvl_90CL, color=cm(4), label=L"\mathrm{MK}", N_smooth=50, ls=(0, (3, 2, 1, 2, 1, 2)))
+plot_contour(ax, grid_fast, lvl_90CL, color=cm(0), label=L"\mathrm{FAST}", N_smooth=80, ls=":", linewidth=2.0, zorder=5)
+plot_contour(ax, grid_all,  lvl_90CL, color=cm(6), label=L"\mathrm{FAST+MK+3ERT}", N_smooth=80)
+#cs1 = ax.contour(grid_sim.y, grid_sim.x, grid_sim.value[:chisqr_cut] .- grid_sim.params[:chisqr_min], levels=[lvl_90CL], colors="black")
+#cs1.collections[1].set_label("simulation")
+#ax.set_title("$(psr_name) TOAs; $EOS eos")
+ax.set_xlabel(L"\beta_0", size=16)
+ax.set_ylabel(L"\log_{10}|\alpha_0|", size=16)
+legend(fontsize=10, loc=1)
+ylim(-4.0,-1.0)
+tight_layout()
+savefig("/Users/abatrakov/Documents/PhD_work/projects/plots/J2222-0137_sim_chisqr_90CL_all.pdf", dpi=600,bbox_inches="tight")

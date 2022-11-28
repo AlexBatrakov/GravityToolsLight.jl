@@ -219,7 +219,7 @@ obs_params = obs_params_dataset["J1952+2630_DDFWHE_4o_32"]
 #obs_params = obs_params_dataset["J1952+2630_DDFWHE_4o_32_XPBDOT"]
 #obs_params = obs_params_dataset["J1952+2630_DDFWHE_4o_32_1SXPBDOT"] 
 obs_params = obs_params_dataset["J1952+2630_DDFWHE_4o_32_1.5M_1SXPBDOT"]
-#obs_params = obs_params_dataset["J1738+0333"]
+obs_params = obs_params_dataset["J1738+0333"]
 #obs_params = obs_params_dataset["J2222−0137_Guo_DDK"]
 #obs_params = obs_params_dataset["Triple System"]
 #obs_params = obs_params_dataset["Double Pulsar"]
@@ -257,7 +257,7 @@ test = GeneralTest(
 
 gsets = GridSetttings(
     N_refinement = 6,
-    CL = [0.68],
+    CL = [0.90],
     refinement_type = "nice",
     delta_chisqr_max = 10.0,
     delta_chisqr_diff = 1.0,

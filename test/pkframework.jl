@@ -3,6 +3,7 @@ using GravityTools
 using PyPlot
 using JLD
 using ColorSchemes
+using Interpolations
 pygui(true)
 
 #-------------------------------------------------------------------------------------\
