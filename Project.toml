@@ -12,3 +12,6 @@ Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 StructureSolver = "86949bca-1401-4ad7-afb8-e041cb4ccbe4"
+
+[compat]
+StructureSolver = "0.1.1"
