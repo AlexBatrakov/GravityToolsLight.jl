@@ -97,7 +97,7 @@ end
 theory = DEF(0.0, 0.0)
 eosname = :MPA1
 bnsys = BinarySystem(:NS, :WD)
-sets = Settings("/Users/abatrakov/Documents/Software/tempo_ram/data_ddstg")
+sets = Settings(ENV["TEMPO"] * "/data_ddstg")
 pf = DEFPhysicalFramework(theory, eosname, bnsys, sets)
 read_grid!(pf)
 
@@ -161,7 +161,7 @@ calculate!(pkf, pf)
 theory = DEF(0.0, 0.0)
 eosname = :MPA1
 bnsys = BinarySystem(:NS, :WD)
-sets = Settings("/Users/abatrakov/Documents/Software/tempo_ram/data_ddstg")
+sets = Settings(ENV["TEMPO"] * "/data_ddstg")
 pf = DEFPhysicalFramework(theory, eosname, bnsys, sets)
 read_grid!(pf)
 
@@ -254,7 +254,7 @@ tf = TempoFramework(test, tsets, gsets)
 theory = DEF(0.0, 0.0)
 eosname = :MPA1
 bnsys = BinarySystem(:NS, :WD)
-sets = Settings("/Users/abatrakov/Documents/Software/tempo_ram/data_ddstg")
+sets = Settings(ENV["TEMPO"] * "/data_ddstg")
 pf = DEFPhysicalFramework(theory, eosname, bnsys, sets)
 read_grid!(pf)
 
