@@ -229,19 +229,19 @@ test = GeneralTest(
     )
 
 tsets = TempoSettings(
-#    par_file_init = "J2222-0137_T1_DDSTG_DMX.par",
-#    tim_file = "J2222-0137_T1.tim",
-#    add_flag = "-c -j -ni npulses.dat",
-    par_file_init = "J2222-0137_DDSTG.par",
-    tim_file = "epta_mk_fast.tim",
-    add_flag = "-c -ni npulses.dat",
+    par_file_init = "J2222-0137_T1_DDSTG_DMX.par",
+    tim_file = "J2222-0137_T1.tim",
+    add_flag = "-c -j -ni npulses.dat",
+#    par_file_init = "J2222-0137_DDSTG.par",
+#    tim_file = "epta_mk_fast.tim",
+#    add_flag = "-c -ni npulses.dat",
     fit_XPBDOT = false,
     nits_first_step = 5,
     gain_fisrt_step = 1.0
     )
 
 gsets = GridSetttings(
-    N_refinement = 5,
+    N_refinement = 0,
     CL = [0.90],
     refinement_type = "nice",
     delta_chisqr_max = 10,
