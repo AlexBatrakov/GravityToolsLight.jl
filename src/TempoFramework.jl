@@ -90,6 +90,8 @@ function Base.show(io::IO, tf::TempoFramework)
 	return nothing
 end
 
+Base.copy(tf::TempoFramework) = TempoFramework(tf.test, tf.tsets, tf.gsets, tf.grid)
+
 function TempoFramework(test::GeneralTest, obs_params::ObsParams, gsets::GridSetttings)
     param1_grid = collect(LinRange(test.param1.min, test.param1.max, test.param1.N))
     param2_grid = collect(LinRange(test.param2.min, test.param2.max, test.param2.N))
