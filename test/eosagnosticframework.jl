@@ -38,13 +38,14 @@ gsets = GridSetttings(
 
 tf = TempoFramework(test, tsets, gsets)
 
-theory = DEF(0.0, 0.0)
-eosname = :MPA1
-bnsys = BinarySystem(:NS, :WD)
-sets = Settings(ENV["TEMPO2"] * "/data_ddstg")
-pf = DEFPhysicalFramework(theory, eosname, bnsys, sets)
-read_grid!(pf)
+#theory = DEF(0.0, 0.0)
+#eosname = :MPA1
+#bnsys = BinarySystem(:NS, :WD)
+#sets = Settings(ENV["TEMPO2"] * "/data_ddstg")
+#pf = DEFPhysicalFramework(theory, eosname, bnsys, sets)
+#read_grid!(pf)
 
 eos_list = ["WFF1", "ENG", "MPA1"]
-eos_agn_test = EOSAgnosticTest(eos_list, pf)
+eos_agn_test = EOSAgnosticTest(eos_list, tf)
+calculate!(eos_agn_test)
 

@@ -28,6 +28,8 @@ struct GeneralTest{T1 <: Union{Float64, Range}, T2 <: Union{Float64, Range}} <: 
     param2::RangedParameter
 end
 
+GeneralTest(test::GeneralTest, eosname) = GeneralTest(test.psrname, eosname, test.alpha0, test.log10alpha0, test.beta0, test.param1, test.param2) 
+
 function Base.show(io::IO, test::GeneralTest)
     println(io, "General test:")
     println(io,     "   Name of the pulsar:  ", test.psrname)
