@@ -25,7 +25,7 @@ function calculate!(eos_agn_test::EOSAgnosticTest)
     work_dir = pwd()
     for i in 2:nworkers()+1
         mkdir("worker$i")
-        mv(eos_agn_test.tf_array[1].tsets.par_file_init, "./"worker$i"/" * eos_agn_test.tf_array[1].tsets.par_file_init, force=true)
-        mv(eos_agn_test.tf_array[1].tsets.tim_file, "./"worker$i"/" * eos_agn_test.tf_array[1].tsets.tim_file, force=true)
+        mv(eos_agn_test.tf_array[1].tsets.par_file_init, "./worker$i/" * eos_agn_test.tf_array[1].tsets.par_file_init, force=true)
+        mv(eos_agn_test.tf_array[1].tsets.tim_file, "./worker$i/" * eos_agn_test.tf_array[1].tsets.tim_file, force=true)
     end
 end

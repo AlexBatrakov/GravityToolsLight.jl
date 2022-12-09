@@ -8,6 +8,7 @@ using Measurements
 using Optim
 using StructArrays
 using Printf
+using Distributed
 # using PyPLot
 
 include("Utils.jl")

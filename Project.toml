@@ -5,6 +5,7 @@ version = "0.1.1"
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 NLsolve = "2774e3e8-f4cf-5e23-947b-6d7e65073b56"
