@@ -90,7 +90,7 @@ function Base.show(io::IO, tf::TempoFramework)
 	return nothing
 end
 
-Base.copy(tf::TempoFramework) = TempoFramework(tf.test, tf.tsets, tf.gsets, tf.grid)
+#Base.copy(tf::TempoFramework) = TempoFramework(tf.test, tf.tsets, tf.gsets, tf.grid)
 
 function TempoFramework(test::GeneralTest, obs_params::ObsParams, gsets::GridSetttings)
     param1_grid = collect(LinRange(test.param1.min, test.param1.max, test.param1.N))
@@ -205,18 +205,24 @@ function read_chisqr()
 end
 
 function read_params(params, par_file)
-    open(par_file,"r") do file_out
-        for line in eachline(par_file)
-            for param_name in keys(params)
-                if startswith(line, String(param_name)*" ")
-                    try
-                        params[param_name] = parse(Float64,line[11:26])
-#                    println(line)
-                    catch err
-                        params[param_name] = NaN
+    if isfile(par_file)
+        open(par_file,"r") do file_out
+            for line in eachline(par_file)
+                for param_name in keys(params)
+                    if startswith(line, String(param_name)*" ")
+                        try
+                            params[param_name] = parse(Float64,line[11:26])
+#                        println(line)
+                        catch err
+                            params[param_name] = NaN
+                        end
                     end
                 end
             end
+        end
+    else
+        for param_name in keys(params)
+            params[param_name] = NaN
         end
     end
     return params
@@ -657,7 +663,7 @@ end
 function cut_ddstg_grid!(grid::SimpleGrid)
     chisqr_min = grid.params[:chisqr_min]
     chisqr_max_mesuared = maximum(filter(x->x<Inf, grid.value[:chisqr]))
-    grid.value[:chisqr_cut] = copy(grid.value[:chisqr])
+    grid.value[:chisqr_cut] = deepcopy(grid.value[:chisqr])
     for i in 1:grid.N_x, j in 1:grid.N_y
         if grid.value[:chisqr][i,j] > chisqr_max_mesuared
             grid.value[:chisqr_cut][i,j] = chisqr_max_mesuared

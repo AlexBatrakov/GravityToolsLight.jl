@@ -9,6 +9,7 @@ using Optim
 using StructArrays
 using Printf
 using Distributed
+using ColorSchemes
 # using PyPLot
 
 include("Utils.jl")

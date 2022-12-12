@@ -135,10 +135,21 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
         return contour_chisqr_case
     end
 
+    function eos_agn_cell_selector(i_cell::Int64, j_cell::Int64, grid::SimpleGrid)
+        chisqr_min = grid.params[:eos_agn_chisqr_min]
+        chisqr_cell = @view grid.value[:eos_agn_chisqr][i_cell:i_cell+1,j_cell:j_cell+1]
+        chisqr_cell_min = minimum(chisqr_cell)
+        chisqr_cell_max = maximum(chisqr_cell)
+        contour_chisqr_case = any(chisqr_cell_min .< chisqr_min .+ chisqr_contours .< chisqr_cell_max)
+        return contour_chisqr_case && contour_cell_selector(i_cell, j_cell, grid)
+    end
+
     if tf.gsets.refinement_type == "nice"
         sell_selector = niceplot_cell_selector
     elseif tf.gsets.refinement_type == "contour"
         sell_selector = contour_cell_selector
+    elseif tf.gsets.refinement_type == "eos_agn"
+        sell_selector = eos_agn_cell_selector
     end
 
     function calculate_params!(grid::SimpleGrid)
@@ -146,6 +157,11 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
             grid.params[:chisqr_min] = min(minimum(grid.value[:chisqr]), grid.params[:chisqr_min])
         else
             grid.params[:chisqr_min] = minimum(grid.value[:chisqr])
+        end
+        if haskey(grid.params, :eos_agn_chisqr_min) && haskey(grid.value, :eos_agn_chisqr)
+            grid.params[:eos_agn_chisqr_min] = min(minimum(grid.value[:eos_agn_chisqr]), grid.params[:eos_agn_chisqr_min])
+        elseif haskey(grid.value, :eos_agn_chisqr)
+            grid.params[:eos_agn_chisqr_min] = minimum(grid.value[:eos_agn_chisqr])
         end
         return nothing
     end
@@ -156,10 +172,14 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
             tf.grid = refine_Grid(tf.grid, get_ddstg_values_local, sell_selector, calculate_params!)
         end
     else
-        for i in 1:add_refinement
-            tf.grid = refine_Grid(tf.grid, get_ddstg_values_local, sell_selector, calculate_params!)
+        if isempty(tf.grid.value)
+            precalculate_Grid(tf.grid, get_ddstg_values_local, calculate_params!)
+        else
+            for i in 1:add_refinement
+                tf.grid = refine_Grid(tf.grid, get_ddstg_values_local, sell_selector, calculate_params!)
+            end
+            tf.gsets = GridSetttings(tf.gsets.N_refinement + add_refinement, tf.gsets.CL, tf.gsets.contours, tf.gsets.refinement_type, tf.gsets.delta_chisqr_max, tf.gsets.delta_chisqr_diff, tf.gsets.gr_in_chisqr)
         end
-        tf.gsets = GridSetttings(tf.gsets.N_refinement + add_refinement, tf.gsets.CL, tf.gsets.contours, tf.gsets.refinement_type, tf.gsets.delta_chisqr_max, tf.gsets.delta_chisqr_diff, tf.gsets.gr_in_chisqr)
     end
 
     cut_ddstg_grid!(tf.grid)

@@ -1,11 +1,17 @@
 using Revise
-using GravityTools
+using Distributed
 using PyPlot
 using Contour
 using JLD
 using ColorSchemes
 using Statistics
+
 pygui(true)
+
+addprocs(3)
+
+@everywhere using GravityTools
+
 
 #-------------------------------------------------------------------------------------
 
@@ -28,9 +34,9 @@ tsets = TempoSettings(
     )
 
 gsets = GridSetttings(
-    N_refinement = 0,
+    N_refinement = 2,
     CL = [0.90],
-    refinement_type = "contour",
+    refinement_type = "eos_agn",
     delta_chisqr_max = 10,
     delta_chisqr_diff = 1.0,
     gr_in_chisqr = true
@@ -48,4 +54,6 @@ tf = TempoFramework(test, tsets, gsets)
 eos_list = ["WFF1", "ENG", "MPA1"]
 eos_agn_test = EOSAgnosticTest(eos_list, tf)
 calculate!(eos_agn_test)
+plot_test(eos_agn_test); savefig("refinement=$(eos_agn_test.tf_array[1].grid.N_refinement)")
+calculate!(eos_agn_test, add_refinement=1)
 
