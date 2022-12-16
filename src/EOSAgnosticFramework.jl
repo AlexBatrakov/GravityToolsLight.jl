@@ -21,7 +21,7 @@ function Base.show(io::IO, eos_agn_test::EOSAgnosticTest)
 	return nothing
 end
 
-function calculate!(eos_agn_test::EOSAgnosticTest, add_refinement=0)
+function calculate!(eos_agn_test::EOSAgnosticTest; add_refinement=0)
 #    N_refinement = eos_agn_test.tf_array[1].gsets.N_refinement
     work_dir = pwd()
     for i in 2:nworkers()+1
@@ -65,7 +65,7 @@ function plot_test(eos_agn_test::EOSAgnosticTest)
     
         for i in 1:length(eos_agn_test.tf_array)
             tf = eos_agn_test.tf_array[i]
-            cs = ax.contour(tf.grid.y, tf.grid.x, round.(tf.grid.value[:chisqr] .- tf.grid.params[:chisqr_min], digits=1), levels=tf.gsets.contopurs, colors=[cm(i)])
+            cs = ax.contour(tf.grid.y, tf.grid.x, round.(tf.grid.value[:chisqr] .- tf.grid.params[:chisqr_min], digits=1), levels=tf.gsets.contours, colors=[cm(i)])
             #clabel(cs, cs.levels, fmt=Dict(1.0 => "1.0", lvl_68CL => "σ", lvl_95CL => "2σ"))
             plot([], [], label=tf.test.eosname, color=cm(i))
         end

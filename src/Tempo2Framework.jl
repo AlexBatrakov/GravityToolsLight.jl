@@ -89,7 +89,7 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
         push!(modified_tparams, get_TempoParameter(tf.test.param2.name, param2))
         modify_par_file(modified_tparams, par_file_work)
 
-        @time chisqr = run_tempo2(par_file_work, tim_file; silent=silent, add_flag=add_flag)
+        chisqr = run_tempo2(par_file_work, tim_file; silent=silent, add_flag=add_flag)
 
         if tf.tsets.nits_second_step != 0
             update_modifed_tparams!(modified_tparams, tf.tsets.params_second_step)
@@ -105,8 +105,8 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
 
     @printf "   DDSTG method m1 = %12.8f, m2 = %12.8f, χ2 = %8.3f, Δχ2 = %8.3f\n" temp_dict[:MTOT]-temp_dict[:M2] temp_dict[:M2] chisqr chisqr-tf.grid.params[:chisqr_min]
 
-        ddstg_names = tuple(:chisqr, keys(temp_dict)...)
-        ddstg_values = tuple(chisqr, values(temp_dict)...)
+        ddstg_names = tuple(:chisqr, :eos_agn_chisqr, keys(temp_dict)...)
+        ddstg_values = tuple(chisqr, chisqr, values(temp_dict)...)
         return (ddstg_names, ddstg_values)
     end
 

@@ -10,7 +10,7 @@ using StructArrays
 using Printf
 using Distributed
 using ColorSchemes
-# using PyPLot
+using PyPlot
 
 include("Utils.jl")
 include("SimpleGrid.jl")
