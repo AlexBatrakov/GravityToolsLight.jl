@@ -46,7 +46,7 @@ function calculate!(eos_agn_test::EOSAgnosticTest; add_refinement=0)
             eos_agn_test.tf_array[j].grid.params[:eos_agn_chisqr_min] = minimum(eos_agn_chisqr_grid)
         end
         plot_test(eos_agn_test)
-        savefig("eos_agn_test_$i.png")
+        savefig("eos_agn_test_$(maximum(eos_agn_test.tf_array[1].grid.ref_level)).png")
     end
 end
 
@@ -60,7 +60,7 @@ function plot_test(eos_agn_test::EOSAgnosticTest)
         cm = ColorMap(ColorSchemes.okabe_ito.colors, 8)
         rc("mathtext",fontset="cm")
         rc("font", family="serif", size=12)
-        fig, ax = subplots()
+        fig, ax = subplots()eo
         pclm = ax.pcolormesh(tf.grid.y, tf.grid.x, tf.grid.value[:eos_agn_chisqr] .- tf.grid.params[:eos_agn_chisqr_min], cmap="Blues_r", norm = matplotlib.colors.Normalize(vmin=0.0,vmax=tf.gsets.delta_chisqr_max), rasterized=true)
     
         for i in 1:length(eos_agn_test.tf_array)
