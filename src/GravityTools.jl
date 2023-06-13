@@ -1,4 +1,4 @@
-module GravityTools
+module GravityToolsLight
 
 using StructureSolver
 using DelimitedFiles
