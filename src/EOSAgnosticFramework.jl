@@ -60,7 +60,7 @@ function plot_test(eos_agn_test::EOSAgnosticTest)
         cm = ColorMap(ColorSchemes.okabe_ito.colors, 8)
         rc("mathtext",fontset="cm")
         rc("font", family="serif", size=12)
-        fig, ax = subplots()eo
+        fig, ax = subplots()
         pclm = ax.pcolormesh(tf.grid.y, tf.grid.x, tf.grid.value[:eos_agn_chisqr] .- tf.grid.params[:eos_agn_chisqr_min], cmap="Blues_r", norm = matplotlib.colors.Normalize(vmin=0.0,vmax=tf.gsets.delta_chisqr_max), rasterized=true)
     
         for i in 1:length(eos_agn_test.tf_array)
