@@ -1,6 +1,6 @@
 module GravityToolsLight
 
-using StructureSolver
+#using StructureSolver
 using DelimitedFiles
 using Distributions
 using NLsolve
@@ -11,9 +11,13 @@ using Printf
 using Distributed
 using ColorSchemes
 using PyPlot
+using ProgressMeter
 
 include("Utils.jl")
 include("SimpleGrid.jl")
+
+include("Refinement2DGrid.jl")
+
 include("PhysicalFramework.jl")
 #include("ClassicalTest.jl")
 #include("MMDiagram.jl")

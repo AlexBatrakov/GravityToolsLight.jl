@@ -155,7 +155,7 @@ function parallel_refine_2DGrid(grid::Refinement2DGrid, target_function, cell_se
     np = nprocs()
 
     grid_refined = Refinement2DGrid(refine_Dict_of_2DArrays(grid.value), refine_2Darray(grid.status), refine_2Darray(grid.ref_level), grid.params, refine_1Darray(grid.x), refine_1Darray(grid.y))
-    println("\nRefinement from ($(grid.N_x), $(grid.N_y)) to ($(grid_refined.N_x), $(grid_refined.N_y))")
+    println("\nRefinement from ($(grid.N_x), $(grid.N_y)) to ($(grid_refined.N_x), $(grid_refined.N_y)), #procs = $(nprocs())")
     interp_counter = 0
     calc_counter = 0
 
@@ -164,6 +164,7 @@ function parallel_refine_2DGrid(grid::Refinement2DGrid, target_function, cell_se
 
     interations_counter = 0
 
+    
     while true
 
 

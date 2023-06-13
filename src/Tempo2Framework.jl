@@ -63,6 +63,17 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
     add_flag = tf.tsets.add_flag
     fit_XPBDOT = tf.tsets.fit_XPBDOT
 
+    println("Generating derictories for parallel calculations: #workers = $(nworkers())")
+
+    work_dir = pwd()
+    for i in 2:nworkers()+1
+        rm("./worker$i", force=true, recursive=true)
+        mkdir("./worker$i")
+        cp(tf.tsets.par_file_init, "./worker$i/" * tf.tsets.par_file_init, force=true)
+        cp(tf.tsets.par_file_init, "./worker$i/" * par_file_work, force=true)
+        cp(tf.tsets.tim_file, "./worker$i/" * tf.tsets.tim_file, force=true)
+    end
+
     println("Obtaining a working parfile with fit_XPBDOT=$fit_XPBDOT")
 
     cp(par_file_init, par_file_work; force=true)
@@ -79,7 +90,12 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
     end
     modified_tparams["eos"] = TempoParameter("EOS", tf.test.eosname)
     
-    function get_ddstg_values_local(param1, param2; silent=true)
+    function get_ddstg_values_local(param1, param2; silent=true, only_keys = false, work_dir=work_dir)
+
+        if myid() != 1
+            cd(work_dir * "/worker$(myid())")
+        end
+
         @printf "run %s = %10.6f, %s = %10.6f\n" tf.test.param1.name param1 tf.test.param2.name param2
   
         update_modifed_tparams!(modified_tparams, tf.tsets.params_first_step)
@@ -103,7 +119,7 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
 #        temp_dict = read_params(Dict(:A1=>0.0, :E=>0.0, :T0=>0.0, :PB=>0.0, :OM=>0.0, :OMDOT=>0.0, :GAMMA=>0.0, :PBDOT=>0.0, :SINI=>0.0, :DTHETA=>0.0, :XDOT=>0.0, :DR=>0.0,:MA=>0.0, :MB =>0.0, :ALPHA0=>0.0, :BETA0=>0.0, :ALPHAA=>0.0, :BETAA=>0.0, :kA=>0.0), par_file_out)
     temp_dict = read_params(Dict(:A1=>0.0, :E=>0.0, :T0=>0.0, :PB=>0.0, :OM=>0.0, :OMDOT=>0.0, :GAMMA=>0.0, :PBDOT=>0.0, :SINI=>0.0, :H3 => 0.0, :VARSIGMA => 0.0, :DTHETA=>0.0, :XDOT=>0.0, :XPBDOT=>0.0, :DR=>0.0, :MTOT=>0.0, :M2 =>0.0, :ALPHA0=>0.0, :BETA0=>0.0, :ALPHAA=>0.0, :BETAA=>0.0, :kA=>0.0), par_file_out)
 
-    @printf "   DDSTG method m1 = %12.8f, m2 = %12.8f, χ2 = %8.3f, Δχ2 = %8.3f\n" temp_dict[:MTOT]-temp_dict[:M2] temp_dict[:M2] chisqr chisqr-tf.grid.params[:chisqr_min]
+    @printf "DDSTG method m1 = %12.8f, m2 = %12.8f, χ2 = %8.3f, Δχ2 = %8.3f\n" temp_dict[:MTOT]-temp_dict[:M2] temp_dict[:M2] chisqr chisqr-tf.grid.params[:chisqr_min]
 
         ddstg_names = tuple(:chisqr, :eos_agn_chisqr, keys(temp_dict)...)
         ddstg_values = tuple(chisqr, chisqr, values(temp_dict)...)
@@ -114,7 +130,7 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
     delta_chisqr_max = tf.gsets.delta_chisqr_max
     delta_chisqr_diff = tf.gsets.delta_chisqr_diff
 
-    function niceplot_cell_selector(i_cell::Int64, j_cell::Int64, grid::SimpleGrid)
+    function niceplot_cell_selector(i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid)
         chisqr_min = grid.params[:chisqr_min]
         chisqr_cell = @view grid.value[:chisqr][i_cell:i_cell+1,j_cell:j_cell+1]
         chisqr_cell_min = minimum(chisqr_cell)
@@ -125,7 +141,7 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
         return max_chisqr_case && diff_chisqr_case || contour_chisqr_case
     end
 
-    function contour_cell_selector(i_cell::Int64, j_cell::Int64, grid::SimpleGrid)
+    function contour_cell_selector(i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid)
         chisqr_min = grid.params[:chisqr_min]
         chisqr_cell = @view grid.value[:chisqr][i_cell:i_cell+1,j_cell:j_cell+1]
         chisqr_cell_min = minimum(chisqr_cell)
@@ -135,7 +151,7 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
         return contour_chisqr_case
     end
 
-    function eos_agn_cell_selector(i_cell::Int64, j_cell::Int64, grid::SimpleGrid)
+    function eos_agn_cell_selector(i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid)
         chisqr_min = grid.params[:eos_agn_chisqr_min]
         chisqr_cell = @view grid.value[:eos_agn_chisqr][i_cell:i_cell+1,j_cell:j_cell+1]
         chisqr_cell_min = minimum(chisqr_cell)
@@ -152,7 +168,7 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
         sell_selector = eos_agn_cell_selector
     end
 
-    function calculate_params!(grid::SimpleGrid)
+    function calculate_params!(grid::Refinement2DGrid)
         if haskey(grid.params, :chisqr_min)
             grid.params[:chisqr_min] = min(minimum(grid.value[:chisqr]), grid.params[:chisqr_min])
         else
@@ -167,16 +183,16 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
     end
 
     if add_refinement == 0
-        precalculate_Grid(tf.grid, get_ddstg_values_local, calculate_params!)
+        simple_parallel_precalculate_2DGrid(tf.grid, get_ddstg_values_local, calculate_params!)
         for i in 1:tf.gsets.N_refinement
-            tf.grid = refine_Grid(tf.grid, get_ddstg_values_local, sell_selector, calculate_params!)
+            tf.grid = parallel_refine_2DGrid(tf.grid, get_ddstg_values_local, sell_selector, calculate_params!)
         end
     else
         if isempty(tf.grid.value)
-            precalculate_Grid(tf.grid, get_ddstg_values_local, calculate_params!)
+            simple_parallel_precalculate_2DGrid(tf.grid, get_ddstg_values_local, calculate_params!)
         else
             for i in 1:add_refinement
-                tf.grid = refine_Grid(tf.grid, get_ddstg_values_local, sell_selector, calculate_params!)
+                tf.grid = parallel_refine_2DGrid(tf.grid, get_ddstg_values_local, sell_selector, calculate_params!)
             end
             tf.gsets = GridSetttings(tf.gsets.N_refinement + add_refinement, tf.gsets.CL, tf.gsets.contours, tf.gsets.refinement_type, tf.gsets.delta_chisqr_max, tf.gsets.delta_chisqr_diff, tf.gsets.gr_in_chisqr)
         end

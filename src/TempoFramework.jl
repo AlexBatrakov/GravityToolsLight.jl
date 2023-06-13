@@ -79,7 +79,7 @@ mutable struct TempoFramework{T <: AbstractGravityTest}
     test::T
     tsets::TempoSettings
     gsets::GridSetttings
-    grid::SimpleGrid
+    grid::Refinement2DGrid
 end
 
 function Base.show(io::IO, tf::TempoFramework)
@@ -95,7 +95,7 @@ end
 function TempoFramework(test::GeneralTest, obs_params::ObsParams, gsets::GridSetttings)
     param1_grid = collect(LinRange(test.param1.min, test.param1.max, test.param1.N))
     param2_grid = collect(LinRange(test.param2.min, test.param2.max, test.param2.N))
-    grid = SimpleGrid(Dict(), param1_grid, param2_grid)
+    grid = Refinement2DGrid(Dict(), param1_grid, param2_grid)
     return PKFramework(test, obs_params, gsets, grid)
 end
 
@@ -104,21 +104,21 @@ TempoFramework(;test::T, tsets::TempoSettings, gsets::GridSetttings) where {T <:
 function TempoFramework(test::GeneralTest, tsets::TempoSettings, gsets::GridSetttings)
     param1_grid = collect(LinRange(test.param1.min, test.param1.max, test.param1.N))
     param2_grid = collect(LinRange(test.param2.min, test.param2.max, test.param2.N))
-    grid = SimpleGrid(Dict(), param1_grid, param2_grid)
+    grid = Refinement2DGrid(Dict(), param1_grid, param2_grid)
     return TempoFramework(test, tsets, gsets, grid)
 end
 
 #function TempoFramework(test::STGTest, tsets::TempoSettings, gsets::GridSetttings)
 #    log10alpha0_grid = collect(LinRange(test.log10alpha0...))
 #    beta0_grid = collect(LinRange(test.beta0...))
-#    grid = SimpleGrid(Dict(), log10alpha0_grid, beta0_grid)
+#    grid = Refinement2DGrid(Dict(), log10alpha0_grid, beta0_grid)
 #    return TempoFramework(test, tsets, gsets, grid)
 #end
 #
 #function TempoFramework(test::MassMassTest, tsets::TempoSettings, gsets::GridSetttings)
 #    mpsr_grid = collect(LinRange(test.mpsr...))
 #    mcomp_grid = collect(LinRange(test.mcomp...))
-#    grid = SimpleGrid(Dict(), mpsr_grid, mcomp_grid)
+#    grid = Refinement2DGrid(Dict(), mpsr_grid, mcomp_grid)
 #    return TempoFramework(test, tsets, gsets, grid)
 #end
 
@@ -347,7 +347,7 @@ function calculate_old!(tf::TempoFramework; add_refinement=0)
     delta_chisqr_max = tf.gsets.delta_chisqr_max
     delta_chisqr_diff = tf.gsets.delta_chisqr_diff
 
-    function niceplot_cell_selector(i_cell::Int64, j_cell::Int64, grid::SimpleGrid)
+    function niceplot_cell_selector(i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid)
         chisqr_min = grid.params[:chisqr_min]
         chisqr_cell = @view grid.value[:chisqr][i_cell:i_cell+1,j_cell:j_cell+1]
         chisqr_cell_min = minimum(chisqr_cell)
@@ -358,7 +358,7 @@ function calculate_old!(tf::TempoFramework; add_refinement=0)
         return max_chisqr_case && diff_chisqr_case || contour_chisqr_case
     end
 
-    function contour_cell_selector(i_cell::Int64, j_cell::Int64, grid::SimpleGrid)
+    function contour_cell_selector(i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid)
         chisqr_min = grid.params[:chisqr_min]
         chisqr_cell = @view grid.value[:chisqr][i_cell:i_cell+1,j_cell:j_cell+1]
         chisqr_cell_min = minimum(chisqr_cell)
@@ -374,7 +374,7 @@ function calculate_old!(tf::TempoFramework; add_refinement=0)
         sell_selector = contour_cell_selector
     end
 
-    function calculate_params!(grid::SimpleGrid)
+    function calculate_params!(grid::Refinement2DGrid)
         if haskey(grid.params, :chisqr_min)
             grid.params[:chisqr_min] = min(minimum(grid.value[:chisqr]), grid.params[:chisqr_min])
         else
@@ -607,7 +607,7 @@ function calculate!(tf::TempoFramework, pf::DEFPhysicalFramework, obs_params::Ob
     delta_chisqr_max = tf.gsets.delta_chisqr_max
     delta_chisqr_diff = tf.gsets.delta_chisqr_diff
 
-    function niceplot_cell_selector(i_cell::Int64, j_cell::Int64, grid::SimpleGrid)
+    function niceplot_cell_selector(i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid)
         chisqr_min = grid.params[:chisqr_min]
         chisqr_cell = @view grid.value[:chisqr][i_cell:i_cell+1,j_cell:j_cell+1]
         chisqr_cell_min = minimum(chisqr_cell)
@@ -618,7 +618,7 @@ function calculate!(tf::TempoFramework, pf::DEFPhysicalFramework, obs_params::Ob
         return max_chisqr_case && diff_chisqr_case || contour_chisqr_case
     end
 
-    function contour_cell_selector(i_cell::Int64, j_cell::Int64, grid::SimpleGrid)
+    function contour_cell_selector(i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid)
         chisqr_min = grid.params[:chisqr_min]
         chisqr_cell = @view grid.value[:chisqr][i_cell:i_cell+1,j_cell:j_cell+1]
         chisqr_cell_min = minimum(chisqr_cell)
@@ -634,7 +634,7 @@ function calculate!(tf::TempoFramework, pf::DEFPhysicalFramework, obs_params::Ob
         sell_selector = contour_cell_selector
     end
 
-    function calculate_params!(grid::SimpleGrid)
+    function calculate_params!(grid::Refinement2DGrid)
         if haskey(grid.params, :chisqr_min)
             grid.params[:chisqr_min] = min(minimum(grid.value[:chisqr]), grid.params[:chisqr_min])
         else
@@ -660,7 +660,7 @@ function calculate!(tf::TempoFramework, pf::DEFPhysicalFramework, obs_params::Ob
     return tf, pf, obs_params
 end
 
-function cut_ddstg_grid!(grid::SimpleGrid)
+function cut_ddstg_grid!(grid::Refinement2DGrid)
     chisqr_min = grid.params[:chisqr_min]
     chisqr_max_mesuared = maximum(filter(x->x<Inf, grid.value[:chisqr]))
     grid.value[:chisqr_cut] = deepcopy(grid.value[:chisqr])
@@ -698,6 +698,10 @@ function calculate!(tf::TempoFramework; add_refinement=0)
         push!(modified_tparams, get_TempoParameter("beta0", tf.test.beta0))
     end
     modified_tparams["eos"] = TempoParameter("EOS", tf.test.eosname)
+
+    if !haskey(tf.grid.params, :chisqr_min)
+        tf.grid.params[:chisqr_min] = Inf
+    end
     
     function get_ddstg_values_local(param1, param2; silent=true)
         @printf "run %s = %10.6f, %s = %10.6f\n" tf.test.param1.name param1 tf.test.param2.name param2
@@ -734,7 +738,7 @@ function calculate!(tf::TempoFramework; add_refinement=0)
     delta_chisqr_max = tf.gsets.delta_chisqr_max
     delta_chisqr_diff = tf.gsets.delta_chisqr_diff
 
-    function niceplot_cell_selector(i_cell::Int64, j_cell::Int64, grid::SimpleGrid)
+    function niceplot_cell_selector(i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid)
         chisqr_min = grid.params[:chisqr_min]
         chisqr_cell = @view grid.value[:chisqr][i_cell:i_cell+1,j_cell:j_cell+1]
         chisqr_cell_min = minimum(chisqr_cell)
@@ -745,7 +749,7 @@ function calculate!(tf::TempoFramework; add_refinement=0)
         return max_chisqr_case && diff_chisqr_case || contour_chisqr_case
     end
 
-    function contour_cell_selector(i_cell::Int64, j_cell::Int64, grid::SimpleGrid)
+    function contour_cell_selector(i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid)
         chisqr_min = grid.params[:chisqr_min]
         chisqr_cell = @view grid.value[:chisqr][i_cell:i_cell+1,j_cell:j_cell+1]
         chisqr_cell_min = minimum(chisqr_cell)
@@ -761,7 +765,7 @@ function calculate!(tf::TempoFramework; add_refinement=0)
         sell_selector = contour_cell_selector
     end
 
-    function calculate_params!(grid::SimpleGrid)
+    function calculate_params!(grid::Refinement2DGrid)
         if haskey(grid.params, :chisqr_min)
             grid.params[:chisqr_min] = min(minimum(grid.value[:chisqr]), grid.params[:chisqr_min])
         else
