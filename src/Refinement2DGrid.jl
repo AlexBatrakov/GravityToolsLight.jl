@@ -150,81 +150,175 @@ end
 
 #--------------------------------------------------------------------------------------------------------------
 
-function parallel_refine_2DGrid(grid::Refinement2DGrid, target_function, cell_selector, params_function!)
+# function parallel_refine_2DGrid(grid::Refinement2DGrid, target_function, cell_selector, params_function!)
 
-    np = nprocs()
+#     np = nprocs()
 
-    grid_refined = Refinement2DGrid(refine_Dict_of_2DArrays(grid.value), refine_2Darray(grid.status), refine_2Darray(grid.ref_level), grid.params, refine_1Darray(grid.x), refine_1Darray(grid.y))
-    println("\nRefinement from ($(grid.N_x), $(grid.N_y)) to ($(grid_refined.N_x), $(grid_refined.N_y)), #procs = $(nprocs())")
-    interp_counter = 0
-    calc_counter = 0
+#     grid_refined = Refinement2DGrid(refine_Dict_of_2DArrays(grid.value), refine_2Darray(grid.status), refine_2Darray(grid.ref_level), grid.params, refine_1Darray(grid.x), refine_1Darray(grid.y))
+#     println("\nRefinement from ($(grid.N_x), $(grid.N_y)) to ($(grid_refined.N_x), $(grid_refined.N_y)), #procs = $(nprocs())")
+#     interp_counter = 0
+#     calc_counter = 0
 
-    calc_status = fill(false, grid.N_x, grid.N_y)
-    cell_selector_status = [true for i_cell in 1:grid.N_x-1, j_cell in 1:grid.N_y-1]
+#     calc_status = fill(false, grid.N_x, grid.N_y)
+#     cell_selector_status = [true for i_cell in 1:grid.N_x-1, j_cell in 1:grid.N_y-1]
 
-    interations_counter = 0
+#     iterations_counter = 0
 
     
+#     while true
+
+
+
+#     cells_to_refine = Vector{Tuple{Int64, Int64}}(undef, 0)
+#     for i_cell in 1:grid.N_x-1, j_cell in 1:grid.N_y-1
+#         if cell_selector(i_cell, j_cell, grid) && cell_selector_status[i_cell, j_cell]
+#             push!(cells_to_refine, (i_cell, j_cell))
+#         end
+#     end
+
+#     n_cells = length(cells_to_refine)
+
+#     if n_cells == 0
+#         break
+#     end
+#     iterations_counter += 1
+#     counter_cells = 1
+
+# #    println("Iteration number $(iterations_counter): cells to refine $(n_cells)")
+
+#     nextidx() = (idx=counter_cells; counter_cells+=1; idx)
+
+#     p = Progress(n_cells)
+#     channel = RemoteChannel(()->Channel{Bool}(), 1)
+
+#     @sync begin
+#         @async while take!(channel)
+#             next!(p)
+#         end
+#         @sync begin
+#             for p=1:np
+#                 if p != myid() || np == 1
+#                     @async begin
+#                         while true
+#                             idx = nextidx()
+#                             if idx > n_cells
+#                                 break
+#                             end
+#                             i_cell, j_cell = cells_to_refine[idx]
+#                             calc_counter += calculate_cell!(p, i_cell, j_cell, grid, grid_refined, target_function)
+#                             cell_selector_status[i_cell, j_cell] = false
+#                             put!(channel, true)
+#                         end
+#                     end
+#                 end
+#             end
+#         end
+#         put!(channel, false)
+#     end
+
+
+#     #interpolate the rest
+
+#     for i_cell in 1:grid.N_x-1, j_cell in 1:grid.N_y-1
+#         if (calc_status[i_cell,j_cell] == false)
+#             interp_counter += interpolate_cell!(i_cell, j_cell, grid, grid_refined)
+#         end
+#     end
+
+#     end
+
+#     println("interations = $iterations_counter, calculations = $calc_counter, interpolations = $interp_counter")
+#     params_function!(grid)
+#     return grid_refined
+# end
+
+function parallel_refine_2DGrid(grid::Refinement2DGrid, target_function, cell_selector, params_function!)
+
+    grid_refined = Refinement2DGrid(refine_Dict_of_2DArrays(grid.value), refine_2Darray(grid.status), refine_2Darray(grid.ref_level), grid.params, refine_1Darray(grid.x), refine_1Darray(grid.y))
+
+    println("\nRefinement from ($(grid.N_x), $(grid.N_y)) to ($(grid_refined.N_x), $(grid_refined.N_y))")
+    interp_counter = 0
+    calc_counter = 0
+    iterations_counter = 0
+    np = nprocs()
+
+    update_calc_counter(n_calc) = (calc_counter+=n_calc)
+
+    cell_selector_status = fill(false, grid.N_x-1, grid.N_y-1)
+
     while true
-
-
-    cells_to_refine = Vector{Tuple{Int64, Int64}}(undef, 0)
-    for i_cell in 1:grid.N_x-1, j_cell in 1:grid.N_y-1
-        if cell_selector(i_cell, j_cell, grid) && cell_selector_status[i_cell, j_cell]
-            push!(cells_to_refine, (i_cell, j_cell))
+        cells_to_refine = Vector{Tuple{Int64, Int64}}(undef, 0)
+        for i_cell in 1:grid.N_x-1, j_cell in 1:grid.N_y-1
+            if !cell_selector_status[i_cell, j_cell] && cell_selector(i_cell, j_cell, grid)
+                push!(cells_to_refine, (i_cell, j_cell))
+                cell_selector_status[i_cell, j_cell] = true
+            end
         end
-    end
 
-    n_cells = length(cells_to_refine)
+        n_cells = length(cells_to_refine)
+        #println("loop iteration n_cells = $(n_cells)")
 
-    if n_cells == 0
-        break
-    end
-    interations_counter += 1
-    counter_cells = 1
-
-    nextidx() = (idx=counter_cells; counter_cells+=1; idx)
-
-    p = Progress(n_cells)
-    channel = RemoteChannel(()->Channel{Bool}(), 1)
-
-    @sync begin
-        @async while take!(channel)
-            next!(p)
+        if n_cells == 0
+            break
         end
+        iterations_counter += 1
+
+        counter_cells = 1
+        nextidx() = (idx=counter_cells; counter_cells+=1; idx)
+        
+        p = Progress(n_cells)
+        channel = RemoteChannel(()->Channel{Bool}(), 1)
+
         @sync begin
-            for p=1:np
-                if p != myid() || np == 1
-                    @async begin
-                        while true
-                            idx = nextidx()
-                            if idx > n_cells
-                                break
+            @async while take!(channel)
+                next!(p)
+            end
+            @sync begin
+                for p=1:np
+                    if p != myid() || np == 1
+                        @async begin
+                            while true
+                                idx = nextidx()
+                                if idx > n_cells
+                                    break   
+                                end
+                                i_cell, j_cell = cells_to_refine[idx]
+                                #println("calculate_cell! i_cell, j_cell: $(i_cell) $(j_cell)")
+                                n_calc = calculate_cell!(p, i_cell, j_cell, grid, grid_refined, target_function)
+                                #cell_selector_status[i_cell, j_cell] = true
+                                display(grid.ref_level)
+                                println("\n")
+                                update_calc_counter(n_calc)
+                                # for cell_next in [(i_cell-1, j_cell), (i_cell, j_cell-1), (i_cell+1, j_cell), (i_cell, j_cell+1)]
+                                #     i_cell_next, j_cell_next = cell_next
+                                #     if (0 < i_cell_next < grid.N_x) && (0 <  j_cell_next < grid.N_y) && !cell_selector_status[i_cell_next, j_cell_next] && cell_selector(i_cell_next, j_cell_next, grid)
+                                #         push!(cells_to_refine, cell_next)
+                                #         n_cells += 1
+                                #         println("")
+                                #         cell_selector_status[i_cell_next, j_cell_next] = true
+                                #     end
+                                # end
+                                put!(channel, true)
+
+                                
                             end
-                            i_cell, j_cell = cells_to_refine[idx]
-                            calc_counter += calculate_cell!(p, i_cell, j_cell, grid, grid_refined, target_function)
-                            cell_selector_status[i_cell, j_cell] = false
-                            put!(channel, true)
                         end
                     end
                 end
             end
+            put!(channel, false)
         end
-        put!(channel, false)
     end
 
-    #interpolate the rest
-
     for i_cell in 1:grid.N_x-1, j_cell in 1:grid.N_y-1
-        if (calc_status[i_cell,j_cell] == false)
+        if (cell_selector_status[i_cell,j_cell] == false)
             interp_counter += interpolate_cell!(i_cell, j_cell, grid, grid_refined)
         end
     end
 
-    end
-
-    println("interations = $interations_counter, calculations = $calc_counter, interpolations = $interp_counter")
+    println("iterations = $iterations_counter, calculations = $calc_counter, interpolations = $interp_counter")
     params_function!(grid)
+
     return grid_refined
 end
 
@@ -262,7 +356,7 @@ function interpolate_cell!(i::Int64, j::Int64, grid::Refinement2DGrid, grid_refi
         end
         grid_refined.ref_level[i_ref+2, j_ref+1] = min(grid.ref_level[i+1,j], grid.ref_level[i+1,j+1])
         grid_refined.status[i_ref+2, j_ref+1] = 0
-        inter_counter
+        inter_counter += 1
     end
     if grid_refined.status[i_ref+1, j_ref+1] == -1 
         for key in keys(grid_refined.value)
@@ -270,7 +364,7 @@ function interpolate_cell!(i::Int64, j::Int64, grid::Refinement2DGrid, grid_refi
         end
         grid_refined.ref_level[i_ref+1, j_ref+1] = min(grid.ref_level[i,j], grid.ref_level[i+1,j], grid.ref_level[i,j+1], grid.ref_level[i+1,j+1])
         grid_refined.status[i_ref+1, j_ref+1] = 0
-        inter_counter
+        inter_counter += 1
     end
     return inter_counter
 end
@@ -301,3 +395,33 @@ function calculate_cell!(p, i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid
 
     return calc_counter
 end
+
+# function calculate_cell!(p, i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid, grid_refined::Refinement2DGrid, target_function)
+#     i_cell_ref = 2*i_cell-1
+#     j_cell_ref = 2*j_cell-1
+#     new_ref_level = maximum(grid.ref_level[i_cell:i_cell+1,j_cell:j_cell+1]) + 1
+#     n_calc = 0
+
+#     for i_ref in i_cell_ref:i_cell_ref+2, j_ref in j_cell_ref:j_cell_ref+2
+#         if grid_refined.status[i_ref,j_ref] < 1
+#             is_on_grid = (mod(i_ref,2)*mod(j_ref,2) == 1) 
+#             calc_keys, calc_values = remotecall_fetch(target_function, p, grid_refined.x[i_ref], grid_refined.y[j_ref])
+
+#             n_calc += 1
+#             for (i_key, key) in enumerate(calc_keys)
+#                 value = calc_values[i_key]
+#                 grid_refined.value[key][i_ref, j_ref] = value
+#                 if is_on_grid
+#                     grid.value[key][div(i_ref,2)+1,div(j_ref,2)+1] = value
+#                     grid.ref_level[div(i_ref,2)+1,div(j_ref,2)+1] = new_ref_level-1
+#                 end
+#             end
+#             grid_refined.status[i_ref,j_ref] = 1
+#         end
+#         if grid_refined.ref_level[i_ref, j_ref] < new_ref_level
+#             grid_refined.ref_level[i_ref, j_ref] = new_ref_level
+#         end
+#     end
+
+#     return n_calc
+# end

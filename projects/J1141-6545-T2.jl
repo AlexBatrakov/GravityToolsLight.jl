@@ -7,7 +7,7 @@ using Statistics
 pygui(true)
 
 using Distributed
-addprocs(4)
+addprocs(8)
 
 @everywhere using GravityToolsLight
 
@@ -15,7 +15,8 @@ addprocs(4)
 
 #-------------------------------------------------------------------------------------
 
-cd("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/fake_with_gauss")
+#cd("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/fake_with_gauss")
+cd("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/science_paper")
 
 test = GeneralTest(
     psrname = "J1141-6545",
@@ -24,26 +25,26 @@ test = GeneralTest(
     param2 = (name = "beta0", min = -6.0, max = 6.0, N = 2)
     )
 
-tsets = TempoSettings(
-    par_file_init = "J1141-6545_T1_DDSTG.par",
-    tim_file = "J1141-6545_T1.tim",
-    add_flag = "-nobs 22000 -newpar",
-    fit_XPBDOT = false,
-    nits_first_step = 3,
-    gain_fisrt_step = 1.0
-    )
-
 # tsets = TempoSettings(
-#     par_file_init = "J1141-6545_until_2018_DDSTG.par",
-#     tim_file = "J1141-6545_until_2018.tim",
+#     par_file_init = "J1141-6545_T1_DDSTG.par",
+#     tim_file = "J1141-6545_T1.tim",
 #     add_flag = "-nobs 22000 -newpar",
 #     fit_XPBDOT = false,
 #     nits_first_step = 3,
 #     gain_fisrt_step = 1.0
 #     )
 
+tsets = TempoSettings(
+    par_file_init = "J1141-6545_until_2018_DDSTG.par",
+    tim_file = "J1141-6545_until_2018.tim",
+    add_flag = "-nobs 22000 -newpar",
+    fit_XPBDOT = false,
+    nits_first_step = 3,
+    gain_fisrt_step = 1.0
+    )
+
 gsets = GridSetttings(
-    N_refinement = 5,
+    N_refinement = 4,
     CL = [0.90],
     refinement_type = "contour",
     delta_chisqr_max = 10,
@@ -69,6 +70,10 @@ tf = TempoFramework(test, tsets, gsets)
 #calculate!(tf)
 
 calculate_t2!(tf)
+tf.grid.status
+
+calculate_t2!(tf, add_refinement=1)
+tf.grid.status
 
 
 
