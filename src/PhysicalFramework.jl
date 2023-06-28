@@ -149,7 +149,7 @@ end
 
 K_list = (:Pb, :T0, :e0, :omega0, :x0)
 PK_list = (:k, :gamma, :Pbdot, :r, :s, :h3, :varsigma, :dtheta)
-X_list = (:m2, :q, :deltaN)
+X_list = (:m1, :m2, :q, :deltaN)
 
 KType = NamedTuple{K_list, NTuple{length(K_list), Float64}}
 PKType = NamedTuple{PK_list, NTuple{length(PK_list), Float64}}
@@ -338,10 +338,11 @@ function calculate_PK_params!(pf::DEFPhysicalFramework)
 end
 
 function calculate_X_params!(pf::DEFPhysicalFramework)
+    m1 = pf.bnsys.psr.mass
     m2 = pf.bnsys.comp.mass
     q = pf.bnsys.psr.mass / pf.bnsys.comp.mass
     deltaN = pf.theory.alpha0*(pf.bnsys.psr.alphaA - pf.theory.alpha0)
-    pf.bnsys.X_params = (m2 = m2, q = q, deltaN = deltaN)
+    pf.bnsys.X_params = (m1 = m1, m2 = m2, q = q, deltaN = deltaN)
 	return pf
 end
 

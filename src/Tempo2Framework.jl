@@ -92,11 +92,18 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
     
     function get_ddstg_values_local(param1, param2; silent=true, only_keys = false, work_dir=work_dir)
 
+        temp_dict = Dict(:A1=>0.0, :E=>0.0, :T0=>0.0, :PB=>0.0, :OM=>0.0, :OMDOT=>0.0, :GAMMA=>0.0, :PBDOT=>0.0, :SINI=>0.0, :H3 => 0.0, :VARSIGMA => 0.0, :DTHETA=>0.0, :XDOT=>0.0, :XPBDOT=>0.0, :DR=>0.0, :MTOT=>0.0, :M2 =>0.0, :ALPHA0=>0.0, :BETA0=>0.0, :ALPHAA=>0.0, :BETAA=>0.0, :kA=>0.0)
+        if only_keys == true
+            ddstg_names = tuple(:chisqr, :eos_agn_chisqr, keys(temp_dict)...)
+            ddstg_values = tuple(0.0, 0.0, values(temp_dict)...)
+            return (ddstg_names, ddstg_values)
+        end
+
         if myid() != 1
             cd(work_dir * "/worker$(myid())")
         end
 
-        #@printf "run %s = %10.6f, %s = %10.6f\n" tf.test.param1.name param1 tf.test.param2.name param2
+        @printf "run %s = %10.6f, %s = %10.6f\n" tf.test.param1.name param1 tf.test.param2.name param2
   
         update_modifed_tparams!(modified_tparams, tf.tsets.params_first_step)
         modified_tparams["nits"] = TempoParameter("NITS", tf.tsets.nits_first_step)
@@ -117,9 +124,9 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
 
         tf.grid.params[:chisqr_min] = tf.grid.params[:chisqr_min] < chisqr ? tf.grid.params[:chisqr_min] : chisqr
 #        temp_dict = read_params(Dict(:A1=>0.0, :E=>0.0, :T0=>0.0, :PB=>0.0, :OM=>0.0, :OMDOT=>0.0, :GAMMA=>0.0, :PBDOT=>0.0, :SINI=>0.0, :DTHETA=>0.0, :XDOT=>0.0, :DR=>0.0,:MA=>0.0, :MB =>0.0, :ALPHA0=>0.0, :BETA0=>0.0, :ALPHAA=>0.0, :BETAA=>0.0, :kA=>0.0), par_file_out)
-    temp_dict = read_params(Dict(:A1=>0.0, :E=>0.0, :T0=>0.0, :PB=>0.0, :OM=>0.0, :OMDOT=>0.0, :GAMMA=>0.0, :PBDOT=>0.0, :SINI=>0.0, :H3 => 0.0, :VARSIGMA => 0.0, :DTHETA=>0.0, :XDOT=>0.0, :XPBDOT=>0.0, :DR=>0.0, :MTOT=>0.0, :M2 =>0.0, :ALPHA0=>0.0, :BETA0=>0.0, :ALPHAA=>0.0, :BETAA=>0.0, :kA=>0.0), par_file_out)
+    temp_dict = read_params(temp_dict, par_file_out)
 
-    #@printf "DDSTG method m1 = %12.8f, m2 = %12.8f, χ2 = %8.3f, Δχ2 = %8.3f\n" temp_dict[:MTOT]-temp_dict[:M2] temp_dict[:M2] chisqr chisqr-tf.grid.params[:chisqr_min]
+    @printf "DDSTG method m1 = %12.8f, m2 = %12.8f, χ2 = %8.3f, Δχ2 = %8.3f\n" temp_dict[:MTOT]-temp_dict[:M2] temp_dict[:M2] chisqr chisqr-tf.grid.params[:chisqr_min]
 
         ddstg_names = tuple(:chisqr, :eos_agn_chisqr, keys(temp_dict)...)
         ddstg_values = tuple(chisqr, chisqr, values(temp_dict)...)

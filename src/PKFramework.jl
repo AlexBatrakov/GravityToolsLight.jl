@@ -13,7 +13,7 @@ struct ObsParams
     masses_init::NamedTuple{(:m1, :m2), Tuple{Float64, Float64}}
 end
 
-ObsParams(;Pb = 0.0 ± 0.0, T0 = 0.0 ± 0.0, e0 = 0.0 ± 0.0, eps1 = 0.0 ± 0.0, eps2 = 0.0 ± 0.0, omega0 = 0.0 ± 0.0, x0 = 0.0 ± 0.0, k = 0.0 ± 0.0, omegadot = 0.0 ± 0.0, gamma = 0.0 ± 0.0, Pbdot = 0.0 ± 0.0, r = 0.0 ± 0.0, m2_shapiro = 0.0 ± 0.0, s = 0.0 ± 0.0, h3 = 0.0 ± 0.0, varsigma = 0.0 ± 0.0, dtheta = 0.0 ± 0.0, m2 = 0.0 ± 0.0, q = 0.0 ± 0.0, deltaN = 0.0 ± 0.0, m1_init = 1.0, m2_init = 1.0) = ObsParams(KObsType((Pb, T0, e0 == 0 ? sqrt(eps1^2 + eps2^2) : e0, omega0 == 0 ? 180/pi*atan(eps1/eps2) : omega0, x0)), PKObsType((k == 0 ? omegadot / 360 * Pb/365.25 : k, gamma, Pbdot, r == 0 ? m2_shapiro*G_CAV*M_sun/c^3 : r, s, h3, varsigma, dtheta)), XObsType((m2, q, deltaN)), (m1 = m1_init, m2 = m2_init))
+ObsParams(;Pb = 0.0 ± 0.0, T0 = 0.0 ± 0.0, e0 = 0.0 ± 0.0, eps1 = 0.0 ± 0.0, eps2 = 0.0 ± 0.0, omega0 = 0.0 ± 0.0, x0 = 0.0 ± 0.0, k = 0.0 ± 0.0, omegadot = 0.0 ± 0.0, gamma = 0.0 ± 0.0, Pbdot = 0.0 ± 0.0, r = 0.0 ± 0.0, m2_shapiro = 0.0 ± 0.0, s = 0.0 ± 0.0, h3 = 0.0 ± 0.0, varsigma = 0.0 ± 0.0, dtheta = 0.0 ± 0.0, m1 = 0.0 ± 0.0, m2 = 0.0 ± 0.0, q = 0.0 ± 0.0, deltaN = 0.0 ± 0.0, m1_init = 1.0, m2_init = 1.0) = ObsParams(KObsType((Pb, T0, e0 == 0 ? sqrt(eps1^2 + eps2^2) : e0, omega0 == 0 ? 180/pi*atan(eps1/eps2) : omega0, x0)), PKObsType((k == 0 ? omegadot / 360 * Pb/365.25 : k, gamma, Pbdot, r == 0 ? m2_shapiro*G_CAV*M_sun/c^3 : r, s, h3, varsigma, dtheta)), XObsType((m1, m2, q, deltaN)), (m1 = m1_init, m2 = m2_init))
 
 function Base.show(io::IO, params::ObsParams)
     println(io, "Observed parameters:")
@@ -495,6 +495,20 @@ end
 
 obs_params_dataset = Dict{String, ObsParams}()
 
+obs_params_dataset["J1141-6545_BHAT"] = ObsParams(
+    Pb = 0.1976509593 ± 0.00000000001,
+    T0 = 53999.9958600347 ± 0.0000002756,
+    e0 = 0.1718768077 ± 0.0000030767,
+    omega0 = 80.691561090562 ± 0.002501062308,
+    x0 = 1.858922 ± 0.000006,
+    omegadot = 5.3096 ± 0.0004, 
+    gamma = 0.000773 ± 0.000011,
+#    Pbdot = -0.3842285e-12 - 0.0013547e-12 ± 0.0168915e-12,
+    Pbdot = -0.403e-12 ± -0.025e-12,
+    m1_init = 1.273322,
+    m2_init = 1.016393
+    )
+
 obs_params_dataset["J1141-6545_DD"] = ObsParams(
     Pb = 0.19765095844297 ± 0.00000000003768,
     T0 = 53999.9958600347 ± 0.0000002756,
@@ -908,6 +922,8 @@ obs_params_dataset["J1738+0333"] = ObsParams(
     q = 8.1 ± 0.2
     )
 
+
+# Guo 2021 Extended reduced-order surrogate models
 obs_params_dataset["J1738+0333_Guo"] = ObsParams(
     Pb = 0.3547907398724 ± 0.0000000000013,
     e0 = 0.00000034 ± 0.00000011,
@@ -919,7 +935,8 @@ obs_params_dataset["J1738+0333_Guo"] = ObsParams(
 
 
 obs_params_dataset["Triple System"] = ObsParams(
-    deltaN = 0.5 ± 0.9
+    deltaN = 0.5e-6 ± 0.9e-6,
+    m1 = 1.4401 ± 0.0015
     )
 
 obs_params_dataset["Double Pulsar"] = ObsParams(

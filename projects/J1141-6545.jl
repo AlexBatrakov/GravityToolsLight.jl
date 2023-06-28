@@ -105,7 +105,7 @@ sets = Settings(ENV["TEMPO"] * "/data_ddstg")
 pf = DEFPhysicalFramework(theory, eosname, bnsys, sets)
 read_grid!(pf)
 
-obs_params = obs_params_dataset["J1141-6545_DDFWHE"]
+obs_params = obs_params_dataset["J1141-6545_BHAT"]
 pf.bnsys.K_params = obs_params.K
 
 pf.theory.alpha0 = -0.0

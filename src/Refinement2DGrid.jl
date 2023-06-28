@@ -256,7 +256,7 @@ function parallel_refine_2DGrid(grid::Refinement2DGrid, target_function, cell_se
         end
 
         n_cells = length(cells_to_refine)
-        #println("loop iteration n_cells = $(n_cells)")
+        println("cells to refine = $(n_cells)")
 
         if n_cells == 0
             break
@@ -286,7 +286,7 @@ function parallel_refine_2DGrid(grid::Refinement2DGrid, target_function, cell_se
                                 #println("calculate_cell! i_cell, j_cell: $(i_cell) $(j_cell)")
                                 n_calc = calculate_cell!(p, i_cell, j_cell, grid, grid_refined, target_function)
                                 #cell_selector_status[i_cell, j_cell] = true
-                                display(grid.ref_level)
+                                #display(grid.ref_level)
                                 println("\n")
                                 update_calc_counter(n_calc)
                                 # for cell_next in [(i_cell-1, j_cell), (i_cell, j_cell-1), (i_cell+1, j_cell), (i_cell, j_cell+1)]
@@ -298,6 +298,7 @@ function parallel_refine_2DGrid(grid::Refinement2DGrid, target_function, cell_se
                                 #         cell_selector_status[i_cell_next, j_cell_next] = true
                                 #     end
                                 # end
+                                println("\n")
                                 put!(channel, true)
 
                                 
@@ -383,7 +384,8 @@ function calculate_cell!(p, i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid
                 grid_refined.value[key][i_ref, j_ref] = calc_values[i_key]
                 if is_on_grid
                     grid.value[key][div(i_ref,2)+1,div(j_ref,2)+1] = calc_values[i_key]
-                    grid.ref_level[div(i_ref,2)+1,div(j_ref,2)+1] = new_ref_level-1
+                    grid.ref_level[div(i_ref,2)+1,div(j_ref,2)+1] = new_ref_level
+                    grid.status[div(i_ref,2)+1,div(j_ref,2)+1] = 1
                 end
             end
             grid_refined.status[i_ref,j_ref] = 1
@@ -392,6 +394,8 @@ function calculate_cell!(p, i_cell::Int64, j_cell::Int64, grid::Refinement2DGrid
             grid_refined.ref_level[i_ref, j_ref] = new_ref_level
         end
     end
+
+    display(grid.ref_level)
 
     return calc_counter
 end
