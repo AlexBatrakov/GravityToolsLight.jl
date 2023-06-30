@@ -112,9 +112,11 @@ sets = Settings("/Users/abatrakov/Documents/Software/tempo_ram/data_ddstg")
 pf = DEFPhysicalFramework(theory, eosname, bnsys, sets)
 read_grid!(pf)
 
-obs_params = obs_params_dataset["J1952+2630_DDFWHE"]
+#obs_params = obs_params_dataset["J1952+2630_DDFWHE"]
 #obs_params = obs_params_dataset["J1952+2630_DDFWHE_23-26_efac"]
 #obs_params = obs_params_dataset["J1952+2630_DDFWHE_23-39"]
+obs_params = obs_params_dataset["J1141-6545_DDFWHE"]
+obs_params = obs_params_dataset["Triple System"]
 pf.bnsys.K_params = obs_params.K
 pf.bnsys.psr.mass = obs_params.masses_init.m1
 pf.bnsys.comp.mass = obs_params.masses_init.m2
@@ -148,8 +150,8 @@ test = GeneralTest(
     )
 
 gsets = GridSetttings(
-    N_refinement = 4,
-    CL = [0.68],
+    N_refinement = 7,
+    CL = [0.90],
     refinement_type = "nice",
     delta_chisqr_max = 10.0,
     delta_chisqr_diff = 1.0,
@@ -231,15 +233,15 @@ pclm = ax.pcolormesh(pkf.grid.y, pkf.grid.x, pkf.grid.value[:chisqr] .- pkf.grid
 #clabel(cs2, cs2.levels)
 #plot([], [], label=L"m_{\mathrm{p}}\,(M_\odot)", color="black")
 
-cs = ax.contour(pkf.grid.y, pkf.grid.x, pkf.grid.value[:chisqr] .- pkf.grid.params[:chisqr_min], levels=[lvl_68CL], colors="red")
+cs = ax.contour(pkf.grid.y, pkf.grid.x, pkf.grid.value[:chisqr] .- pkf.grid.params[:chisqr_min], levels=[lvl_90CL], colors="red")
 #clabel(cs, cs.levels, fmt=Dict(lvl_68CL => "σ", lvl_95CL => "2σ"))
 plot([], [], label=L"\Delta\chi^{2}\, \, \mathrm{CL}", color="red")
 ax.set_ylabel(get_label(pkf.test.param1.name), size=16)
 ax.set_xlabel(get_label(pkf.test.param2.name), size=16)
 ax.axhline(y=log10(3.4e-3), color=cm(7), label=L"\mathrm{Cassini}", ls="--", zorder=5)
 
-cs3 = ax.contour(grid_ddstg.y, grid_ddstg.x, grid_ddstg.value[:chisqr] .- grid_ddstg.params[:chisqr_min], levels=levels=[lvl_90CL], colors=[cm(2)], linestyles=["-."])
-plot([], [], label=L"\mathrm{Guo\ et\ al.}", color=cm(2), ls="-.", zorder=4)
+# cs3 = ax.contour(grid_ddstg.y, grid_ddstg.x, grid_ddstg.value[:chisqr] .- grid_ddstg.params[:chisqr_min], levels=levels=[lvl_90CL], colors=[cm(2)], linestyles=["-."])
+# plot([], [], label=L"\mathrm{Guo\ et\ al.}", color=cm(2), ls="-.", zorder=4)
 
 #title(L"\mathrm{PK\ method, 23-26}")
 legend(fontsize=12)
