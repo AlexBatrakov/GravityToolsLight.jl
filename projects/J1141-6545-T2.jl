@@ -14,15 +14,16 @@ addprocs(8)
 #-------------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------------
-
-#cd("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/fake_with_gauss")
+# ln -s /Users/abatrakov/Documents/Work/PhD/computed_grids_fine data_ddstg
+# cd /Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/science_paper/
+# cd("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/fake_with_gauss")
 cd("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/science_paper")
 
 test = GeneralTest(
     psrname = "J1141-6545",
-    eosname = "MPA1",
+    eosname = "BSk22",
     param1 = (name = "log10alpha0", min = -4.0, max = -1.0, N = 3),
-    param2 = (name = "beta0", min = -6.0, max = 6.0, N = 3)
+    param2 = (name = "beta0", min = -6.0, max = 10.0, N = 3)
     )
 
 # tsets = TempoSettings(
@@ -33,6 +34,9 @@ test = GeneralTest(
 #     nits_first_step = 3,
 #     gain_fisrt_step = 1.0
 #     )
+
+
+# tempo2 -f J1141-6545_until_2018_DDSTG.par J1141-6545_until_2018.tim -nobs 22000 -newpar
 
 tsets = TempoSettings(
     par_file_init = "J1141-6545_until_2018_DDSTG.par",
