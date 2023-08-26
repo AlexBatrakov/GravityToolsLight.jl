@@ -76,8 +76,8 @@ tf = TempoFramework(test, tsets, gsets)
 calculate_t2!(tf)
 tf.grid.status
 
-calculate_t2!(tf, add_refinement=1)
-tf.grid.status
+#calculate_t2!(tf, add_refinement=1)
+#tf.grid.status
 
 
 
@@ -87,12 +87,16 @@ cs = ax.contour(tf.grid.y, tf.grid.x, tf.grid.value[:chisqr_cut] .- tf.grid.para
 
 #-------------------------------------------------------------------------------------
 
-grid_DDSTG_J1141_6545 = load("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/science_paper/grid_DDSTG_J1141_6545.jld", "grid")
-grid_PK_J1141_6545 = load("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_DDFWHE.jld", "grid")
-grid_PK_J1141_6545_BHAT = load("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_PK_J1141-6545_BHAT_68.jld", "grid")
-grid_PK_Double_Pulsar = load("/Users/abatrakov/Documents/Work/PhD/projects/J1952+2630/saves/grid_PK_Double_Pulsar.jld", "grid")
+grid_DDSTG_J1141_6545 = load("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/science_paper/grid_DDSTG_J1141_6545_BSk22.jld", "grid")
+grid_PK_J1141_6545 =    load("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_DDFWHE_J1141-6545_BSk22.jld", "grid")
+grid_PK_Triple_System = load("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_PK_Triple_System_BSk22.jld", "grid")
+grid_PK_Double_Pulsar = load("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_PK_Double_Pulsar_BSk22.jld", "grid")
+grid_PK_J1738_0333 =   load("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_PK_J1738+0333_Guo_BSk22.jld", "grid")
+
+#grid_PK_J1141_6545_BHAT = load("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_PK_J1141-6545_BHAT_68.jld", "grid")
+
 # grid_PK_J2222_0137 = load("/Users/abatrakov/Documents/Work/PhD/projects/J1952+2630/saves/grid_PK_J2222−0137.jld", "grid")
-grid_PK_J1738_0333 = load("/Users/abatrakov/Documents/Work/PhD/projects/J1952+2630/saves/grid_PK_J1738+0333.jld", "grid")
+
 
 rc("mathtext",fontset="cm")
 rc("font", family="serif", size=12)
@@ -130,6 +134,10 @@ cs_J1738_0333 = ax.contour(grid_PK_J1738_0333.y, grid_PK_J1738_0333.x, grid_PK_J
 #clabel(cs, cs.levels, fmt=Dict(1.0 => "1.0", lvl_68CL => "σ", lvl_95CL => "2σ"))
 plot([], [], label=L"\mathrm{J}1738+0333", color=cm(2), ls=":")
 
+cs_J1738_0333 = ax.contour(grid_PK_Triple_System.y, grid_PK_Triple_System.x, grid_PK_Triple_System.value[:chisqr] .- grid_PK_Triple_System.params[:chisqr_min], levels=[lvl_90CL], colors=["red"], linestyles=["-"])
+#clabel(cs, cs.levels, fmt=Dict(1.0 => "1.0", lvl_68CL => "σ", lvl_95CL => "2σ"))
+plot([], [], label=L"\mathrm{Triple System}", color="red", ls="-")
+
 
 ax.set_ylabel(get_label("log10alpha0"), size=16)
 ax.set_xlabel(get_label("beta0"), size=16)
@@ -137,7 +145,7 @@ ax.axhline(y=log10(3.4e-3), color=cm(7), label=L"\mathrm{Cassini}", ls="--", zor
 legend(fontsize=12)
 #ax.invert_xaxis()
 xlim(left=-6.0, right=+6.0)
-ylim(top=-1.0, bottom=-4.0)
+ylim(top=-1.5, bottom=-4.0)
 tight_layout()
 
-savefig("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/science_paper/proposal_plot.pdf")
+savefig("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/science_paper/plot_BSk22.pdf")

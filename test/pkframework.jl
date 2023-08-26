@@ -142,7 +142,7 @@ check_terms_in_chisqr(obs_params, pf)
 
 test = GeneralTest(
     psrname = "J1141-6545",
-    eosname = "MPA1",
+    eosname = "BSk22",
     param1 = (name = "log10alpha0", min = -4.0, max = -1.0, N = 9),
     param2 = (name = "beta0", min = -6.0, max = 6.0, N = 9)
 #    param2 = (name = "PBDOT", min = -0.32, max = -0.45, N = 9),

@@ -1,5 +1,5 @@
 using Revise
-using GravityTools
+using GravityToolsLight
 using PyPlot
 using Contour
 using JLD

@@ -63,6 +63,11 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
     add_flag = tf.tsets.add_flag
     fit_XPBDOT = tf.tsets.fit_XPBDOT
 
+    println("Obtaining a working parfile with fit_XPBDOT=$fit_XPBDOT")
+
+    
+
+
     println("Generating derictories for parallel calculations: #workers = $(nworkers())")
 
     work_dir = pwd()
@@ -73,8 +78,6 @@ function calculate_t2!(tf::TempoFramework; add_refinement=0)
         cp(tf.tsets.par_file_init, "./worker$i/" * par_file_work, force=true)
         cp(tf.tsets.tim_file, "./worker$i/" * tf.tsets.tim_file, force=true)
     end
-
-    println("Obtaining a working parfile with fit_XPBDOT=$fit_XPBDOT")
 
     cp(par_file_init, par_file_work; force=true)
     if !haskey(tf.grid.params, :chisqr_min)
