@@ -14,6 +14,7 @@ addprocs(8)
 #-------------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------------
+# cd /software//tempo2/T2runtime
 # ln -s /Users/abatrakov/Documents/Work/PhD/computed_grids_fine data_ddstg
 # cd /Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/science_paper/
 # cd("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/fake_with_gauss")
@@ -41,7 +42,7 @@ test = GeneralTest(
 tsets = TempoSettings(
     par_file_init = "J1141-6545_until_2018_DDSTG.par",
     tim_file = "J1141-6545_until_2018.tim",
-    add_flag = "-nobs 22000 -newpar",
+    add_flag = "-nobs 21000 -newpar",
     fit_XPBDOT = false,
     nits_first_step = 3,
     gain_fisrt_step = 1.0

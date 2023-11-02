@@ -1,15 +1,16 @@
 #-------------------------------------------------------------------------------------\
 theory = DEF(0.0, 0.0)
 eosname = :BSk22
-bnsys = BinarySystem(:NS, :WD)
-sets = Settings("/Users/abatrakov/Documents/Work/PhD/computed_grids_fine")
+bnsys = BinarySystem(:NS, :NS)
+#sets = Settings("/Users/abatrakov/Documents/Work/PhD/computed_grids_fine")
+sets = Settings("/Users/abatrakov/Documents/Work/PhD/computed_grids_fine_10")
 pf = DEFPhysicalFramework(theory, eosname, bnsys, sets)
 read_grid!(pf)
 
-obs_params = obs_params_dataset["J1738+0333_Guo"]
+#obs_params = obs_params_dataset["J1738+0333_Guo"]
 #obs_params = obs_params_dataset["J2222−0137_Guo_DDK"]
 #obs_params = obs_params_dataset["Triple System"]
-#obs_params = obs_params_dataset["Double Pulsar"]
+obs_params = obs_params_dataset["Double Pulsar"]
 #obs_params = obs_params_dataset["J1141-6545_DDFWHE"]
 pf.bnsys.K_params = obs_params.K
 pf.bnsys.psr.mass = obs_params.masses_init.m1
@@ -38,7 +39,7 @@ test = GeneralTest(
     psrname = "J1141-6545",
     eosname = "BSk22",
     param1 = (name = "log10alpha0", min = -4.0, max = -1.0, N = 9),
-    param2 = (name = "beta0", min = -6.0, max = 6.0, N = 9)
+    param2 = (name = "beta0", min = -6.0, max = 10.0, N = 9)
 #    param2 = (name = "PBDOT", min = -0.32, max = -0.45, N = 9),
 #    param1 = (name = "GAMMA", min = 0.0004, max = 0.0011, N = 9),
     )
@@ -56,7 +57,7 @@ pkf = PKFramework(test, obs_params, gsets)
 
 calculate!(pkf, pf)
 
-save("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_PK_J1738+0333_Guo_BSk22.jld",  "grid", pkf.grid)
-#save("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_PK_Double_Pulsar_BSk22.jld",  "grid", pkf.grid)
+#save("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_PK_J1738+0333_Guo_BSk22.jld",  "grid", pkf.grid)
+save("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_PK_Double_Pulsar_BSk22.jld",  "grid", pkf.grid)
 #save("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_PK_Triple_System_BSk22.jld",  "grid", pkf.grid)
 #save("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/saves/grid_DDFWHE_J1141-6545_BSk22.jld",  "grid", pkf.grid)

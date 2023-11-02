@@ -12,6 +12,9 @@ lvl_95CL = quantile(Chisq(2), 0.95)
 lvl_99CL = quantile(Chisq(2), 0.99)
 lvl_997CL = quantile(Chisq(2), 0.997)
 
+#--------------------------------------------------------------------------------------------------------------
+# Tests
+
 abstract type AbstractGravityTest end
 
 Range = NamedTuple{(:min, :max, :N), Tuple{Float64, Float64, Int64}}
@@ -106,6 +109,130 @@ end
 
 
 GridSetttings(;N_refinement=1, CL=Float64[], contours=Float64[], refinement_type="nice", delta_chisqr_max=10.0, delta_chisqr_diff=1.0, gr_in_chisqr=false) = GridSetttings(N_refinement, CL, contours, refinement_type, delta_chisqr_max, delta_chisqr_diff, gr_in_chisqr)
+
+
+#--------------------------------------------------------------------------------------------------------------
+# Variables
+
+abstract type AbstractVariable end
+
+struct ValueVariable{T} <: AbstractVariable
+    name::String
+    name_symbol::Symbol
+    value::T
+end
+
+ValueVariable(name::String, value::T) where {T} = ValueVariable{T}(name, Symbol(name), value)
+
+ValueVariable(;name::String, value::T) where {T} = ValueVariable{T}(name, Symbol(name), value)
+
+function Base.show(io::IO, var::ValueVariable)
+    indent = get(io, :indent, 0)
+    print(io, " "^indent, var.name)
+    print(io, " ", var.value)
+	return nothing
+end
+
+abstract type AbstractRangeRule end
+
+function transformation(range_rule::T, min, max, N::Int64) where {T <: AbstractRangeRule}
+end
+
+struct LinRule <: AbstractRangeRule end
+
+function transformation(range_rule::LinRule, min, max, N::Int64)
+    lin_values = collect(LinRange(min, max, N))
+    values = lin_values
+    return lin_values, values
+end
+
+struct LogRule <: AbstractRangeRule
+    sign::Int64
+end
+
+function transformation(range_rule::LogRule, min, max, N::Int64)
+    min_log = log10(abs(min))
+    max_log = log10(abs(max))
+    lin_values = collect(LinRange(min_log, max_log, N))
+    values = range_rule.sign .* 10.0 .^ lin_values
+    return lin_values, values
+end
+
+struct RangeVariable{T <: AbstractRangeRule}
+    name::String
+    name_symbol::Symbol
+    min::Float64
+    max::Float64
+    N::Int64
+    range_rule::T
+    lin_values::Vector{Float64}
+    values::Vector{Float64}
+    function RangeVariable{T}(name::String, min, max, N::Int64, range_rule::T) where {T <: AbstractRangeRule}
+        name_symbol = Symbol(name)
+        lin_values, values = transformation(range_rule, min, max, N)
+        return new(name, name_symbol, min, max, N, range_rule, lin_values, values)
+    end
+end
+
+RangeVariable(name::String, min, max, N::Int64, range_rule::T) where {T <: AbstractRangeRule} = RangeVariable{T}(name, min, max, N, range_rule)
+
+function RangeVariable(;name::String, min=nothing, max=nothing, N=nothing, range_rule=nothing)
+    if range_rule == :lin
+        return RangeVariable(name, min, max, N, LinRule())
+    elseif range_rule == :log
+        return RangeVariable(name, min, max, N, LogRule(sign(min)))
+    end
+end
+
+function Base.show(io::IO, var::RangeVariable)
+    indent = get(io, :indent, 0)
+    print(io, " "^indent, var.name)
+    print(io, " [$(var.min), $(var.max)]")
+    print(io, " $(var.N) $(typeof(var).parameters[1]) entries")
+	return nothing
+end
+
+function Variable(;name::String, value=nothing, min=nothing, max=nothing, N=nothing, range_rule=nothing)
+    if value === nothing
+        return RangeVariable(name=name, min=min, max=max, N=N, range_rule=range_rule)
+    else
+        return ValueVariable(name=name, value=value)
+    end
+end
+
+Var = Variable
+
+#--------------------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------------------
+# Test parameters
+
+abstract type AbstractTestParameters end
+
+struct TestParameters{T1 <: AbstractRangeRule, T2 <: AbstractRangeRule, T3 <: ValueVariable, T4 <: RangeVariable} <: AbstractTestParameters
+    x::RangeVariable{T1}
+    y::RangeVariable{T2}
+    int::Vector{T3}
+    ext::Vector{T4}
+end
+
+function Base.show(io::IO, params::TestParameters)
+    indent = get(io, :indent, 0)
+    println(io, ' '^indent, "Test parameters:")
+    println(io, ' '^(indent + 4), "X range parameter:")
+    println(IOContext(io, :indent => indent+8), params.x)
+    println(io, ' '^(indent + 4), "Y range parameter:")
+    print(IOContext(io, :indent => indent+8), params.y)
+    if !isempty(params.int)
+        println(io, "\n", ' '^(indent + 4), "Internal value parameters:")
+        print_array(IOContext(io, :indent => indent+8), params.int)
+    end
+    if !isempty(params.ext)
+        println(io, "\n", ' '^(indent + 4), "External range parameters:")
+        print_array(IOContext(io, :indent => indent+8), params.ext)
+    end
+	return nothing
+end
 
 
 #=
