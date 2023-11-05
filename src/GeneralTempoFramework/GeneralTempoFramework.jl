@@ -1,4 +1,38 @@
-@enum TempoVersion tempo=1 tempo2=2
+#--------------------------------------------------------------------------------------------------------------
+# Определение абстрактного типа для версий Tempo
+abstract type AbstractTempoVersion end
+
+# Определение функции для всех типов Tempo
+function get_tempo_command(::AbstractTempoVersion)
+    error("This function must be implemented for each specific Tempo version.")
+end
+
+# Определение конструкторов и функций для Tempo
+struct Tempo <: AbstractTempoVersion
+    custom_data_directory::String
+    Tempo() = new(get_tempo_directory()) # Конструктор по умолчанию
+    Tempo(custom_dir::String) = new(custom_dir) # Конструктор с параметром
+end
+
+# Функция для получения пути к директории по умолчанию для Tempo
+get_tempo_directory() = get(ENV, "TEMPO", "/default/path/to/tempo")
+
+# Определение конструкторов и функций для Tempo2
+struct Tempo2 <: AbstractTempoVersion
+    custom_data_directory::String
+    Tempo2() = new(get_tempo2_directory()) # Конструктор по умолчанию
+    Tempo2(custom_dir::String) = new(custom_dir) # Конструктор с параметром
+end
+
+# Функция для получения пути к директории по умолчанию для Tempo2
+get_tempo2_directory() = get(ENV, "TEMPO2", "/default/path/to/tempo2")
+
+# Определение функций для получения команды
+get_tempo_command(::Tempo) = "tempo"
+get_tempo_command(::Tempo2) = "tempo2"
+
+
+#--------------------------------------------------------------------------------------------------------------
 
 struct TempoKeys
     silent::Bool
@@ -15,7 +49,9 @@ function Base.show(io::IO, keys::TempoKeys)
 	return nothing
 end
 
-mutable struct GeneralTempoSettings{T <: TempoVersion}
+#--------------------------------------------------------------------------------------------------------------
+# Основные настройки Tempo
+struct BasicTempoSettings{T <: AbstractTempoVersion}
     work_dir::String
     version::T
     par_file_init::String
@@ -23,65 +59,44 @@ mutable struct GeneralTempoSettings{T <: TempoVersion}
     flags::String
     keys::TempoKeys
     tparams::Vector{GeneralTempoParameter}
-    iters::Int64
-    nits::Vector{Int64}
-    gain::Vector{Float64}
-    tparams_local::Vector{Vector{GeneralTempoParameter}}
 end
 
-function Base.show(io::IO, tsets::GeneralTempoSettings)
-    println(io, "Tempo settings:")
-    println(io, "   Working directory: ", tsets.work_dir)
-    println(io, "   Version: ", tsets.version)
-    println(io, "   Initial par file: ", tsets.par_file_init)
-    println(io, "   Working tim file: ", tsets.tim_file)
-    println(io, "   Selected additional flags: ", tsets.flags)
-    println(io, "   ", tsets.keys)
-    println(io, "   Tempo parameters used:", tsets.tparams)
-    println(io, "   Number of iterations: ", tsets.iters)
-    for iter in 1:tsets.iters
-        println(io, "   Step # $iter:")
-        println(io, "       GAIN value: ", iter <= length(tsets.gain) ? tsets.gain[iter] : tsets.gain[end])
-        println(io, "       NITS value: ", iter <= length(tsets.nits) ? tsets.nits[iter] : tsets.nits[end])
-        println(io, "       Local tempo parameters: ", tsets.tparams_local[iter])
-    end
+function Base.show(io::IO, bsets::BasicTempoSettings)
+    println(io, "Basic Tempo settings:")
+    println(io, "   Working directory: ", bsets.work_dir)
+    println(io, "   Version: ", bsets.version)
+    println(io, "   Initial par file: ", bsets.par_file_init)
+    println(io, "   Working tim file: ", bsets.tim_file)
+    println(io, "   Selected additional flags: ", bsets.flags)
+    println(io, "   ", bsets.keys)
+    println(io, "   Tempo parameters used:", bsets.tparams)
 	return nothing
 end
 
-GeneralTempoSettings(;
+BasicTempoSettings(;
     work_dir,
     version,
     par_file_init,
     tim_file,
     flags = "",
     keys = TempoKeys(),
-    tparams = GeneralTempoParameter[],
-    iters,
-    nits = 3 * ones(Int64, iters),
-    gain = ones(Float64, iters),
-    tparams_local = [Vector{GeneralTempoParameter}() for _ in 1:iters]
-    ) = GeneralTempoSettings(
+    tparams = GeneralTempoParameter[]
+    ) = BasicTempoSettings(
         work_dir,
         version,
         par_file_init,
         tim_file,
         flags,
         keys,
-        tparams,
-        iters,
-        nits,
-        gain,
-        tparams_local
+        tparams
         )
 
-
-
-function run_tempo_single(tsets::GeneralTempoSettings)
-    work_dir = tsets.work_dir  # Установка локальной переменной для директории
+function run_tempo_basic(bsets::BasicTempoSettings)
+    work_dir = bsets.work_dir  # Установка локальной переменной для директории
     cd(work_dir)
     
     # Создание объекта файла с начальными настройками
-    par_file_init = TempoParFile("$(tsets.par_file_init)", new_name_suffix="_init")
+    par_file_init = TempoParFile("$(bsets.par_file_init)", new_name_suffix="_init")
 
     # Определение пути к файлу new.par и его удаление если он существует
 
@@ -91,20 +106,20 @@ function run_tempo_single(tsets::GeneralTempoSettings)
         rm(new_par_path)  # Удаление файла, чтобы избежать путаницы с предыдущими запусками
     end
 
-    for tparam in tsets.tparams
+    for tparam in bsets.tparams
         extend_par_file!(par_file_init, tparam)
     end
 
     write_par_file(par_file_init)
 
-    command = `$(tsets.version) -f $(par_file_init.name) $(tsets.tim_file) $([split(tsets.flags)...])`
+    command = `$(get_tempo_command(bsets.version)) -f $(par_file_init.name) $(bsets.tim_file) $([split(bsets.flags)...])`
 
         # Инициализация IOBuffer для захвата вывода
     output_io = IOBuffer()
     stderr_io = IOBuffer()
 
     # Запуск команды с перенаправлением вывода
-    process = if tsets.keys.silent
+    process = if bsets.keys.silent
         run(pipeline(command, stdout=output_io, stderr=stderr_io), wait=false)
     else
         run(pipeline(command, stdout=stdout, stderr=stderr_io), wait=false)
@@ -117,26 +132,36 @@ function run_tempo_single(tsets::GeneralTempoSettings)
     output = String(take!(output_io))
     stderr_output = String(take!(stderr_io))
 
-    parsed_results = parse_tempo_output(output)
+    # Сразу проверяем наличие ошибок в stderr_output и output
+    if contains(stderr_output, "Ошибка") || contains(output, "NaN") || contains(output, "ERROR")
+        println("Обнаружена ошибка в выводе. Ошибка выполнения $(typeof(bsets.version)).")
+    end
+    
+    parsed_output = parse_tempo_output(output, bsets.version)
 
     # Если нужно, печатаем вывод в файл
-    if tsets.keys.print_output
+    if bsets.keys.print_output
         output_filename = "$(par_file_init.name[1:end-4]).out"
         write(output_filename, output)
         # Если нужно, можно также сохранить stderr_output в файл
     end
 
-    upd_par_path = generate_par_file_path(tsets.par_file_init, "upd", work_dir)
+    upd_par_path = generate_par_file_path(bsets.par_file_init, "upd", work_dir)
 
-    cp(new_par_path, upd_par_path, force=true)
 
-    par_file_upd = format_and_validate_par_file(upd_par_path, output, tsets)
+    # Проверяем существование файла
+    if !isfile(new_par_path)
+        println("Файл new_par_path не найден. Ошибка выполнения $(typeof(bsets.version)).")
+    else
+        cp(new_par_path, upd_par_path, force=true)
+        par_file_upd = format_and_validate_par_file(upd_par_path, output, bsets)
+    end
 
-    return parsed_results, output, stderr_output
+    return parsed_output, output, stderr_output
 end
 
 
-function format_and_validate_par_file(par_file_path::String, output::String, tsets::GeneralTempoSettings)
+function format_and_validate_par_file(par_file_path::String, output::String, bsets::BasicTempoSettings)
     # Загрузка содержимого файла .par
 
     par_file = TempoParFile(par_file_path)
@@ -145,7 +170,7 @@ function format_and_validate_par_file(par_file_path::String, output::String, tse
     # Ваша логика добавления параметров
 
     # тут добавляем отсуствующие глобальные параметры которые были при запуске. Если параметр присуствует то он либо отстался прежним либо был изменен
-    for gparam in tsets.tparams
+    for gparam in bsets.tparams
         if !haskey(par_file.tparams, gparam)
             extend_par_file!(par_file, gparam)
         end
@@ -155,9 +180,9 @@ function format_and_validate_par_file(par_file_path::String, output::String, tse
     # Ваша логика форматирования
 
     # Форматирование файла и добавление/обновление параметров EFAC и EQUAD, если это требуется
-    if tsets.keys.fit_EFACs_EQUADs
+    if bsets.keys.fit_EFACs_EQUADs
         # Расчёт новых значений EFAC и EQUAD
-        efacs_equads_params = calculate_EFACs_EQUADs(output, tsets)
+        efacs_equads_params = calculate_EFACs_EQUADs(output, bsets)
         # Добавление/обновление EFAC и EQUAD в файле .par
         for efac_equad_param in efacs_equads_params
             extend_par_file!(par_file, efac_equad_param)
@@ -171,7 +196,17 @@ function format_and_validate_par_file(par_file_path::String, output::String, tse
     return par_file
 end
 
-function parse_tempo_output(output::String)
+# Функция для вызова парсера на основе типа версии
+function parse_tempo_output(output, version::AbstractTempoVersion)
+    parse_tempo_output(output, typeof(version))
+end
+
+# Определение функций для разных версий
+function parse_tempo_output(output, ::Type{Tempo})
+    # Реализация парсера для Tempo
+end
+
+function parse_tempo_output(output::String, ::Type{Tempo2})
     # Разделяем выходные данные на секции по итерациям
     sections = split(output, "Complete fit\n\n\n")
     
@@ -187,7 +222,7 @@ function parse_tempo_output(output::String)
     for section in sections
         # Создаем словарь для сохранения данных текущей итерации
         results = Dict()
-
+            
         # Извлечение информации о RMS pre-fit и post-fit residuals
         rms_regex = r"RMS pre-fit residual = (\d+\.\d+) \(us\), RMS post-fit residual = (\d+\.\d+) \(us\)"
         rms_match = match(rms_regex, section)
@@ -195,29 +230,32 @@ function parse_tempo_output(output::String)
             results["RMS pre-fit residual (us)"] = parse(Float64, rms_match[1])
             results["RMS post-fit residual (us)"] = parse(Float64, rms_match[2])
         end
-
-        # Извлечение информации о Fit Chisq и Chisqr/nfree
-        chisq_regex = r"Fit Chisq = (\d+\.?\d*[eE]?[-+]?\d*)\s+Chisqr/nfree = (\d+\.\d+)"
+        
+        # Обновляем регулярное выражение и процедуру извлечения информации о Fit Chisq, Chisqr/nfree и pre/post
+        chisq_regex = r"Fit Chisq = (\d+\.?\d*[eE]?[-+]?\d*)\s+Chisqr/nfree = (\d+\.\d+)/(\d+) = (\d+\.\d+)\s+pre/post = (\d+(?:\.\d+)?)"
         chisq_match = match(chisq_regex, section)
         if chisq_match !== nothing
             results["Fit Chisq"] = parse(Float64, chisq_match[1])
-            results["Chisqr/nfree"] = parse(Float64, chisq_match[2])
+            results["Chisqr"] = parse(Float64, chisq_match[2])
+            results["nfree"] = parse(Int, chisq_match[3])
+            results["Chisqr/nfree"] = parse(Float64, chisq_match[4])
+            results["pre/post"] = parse(Float64, chisq_match[5])
         end
-
+        
         # Извлечение информации о количестве параметров подгонки
         params_regex = r"Number of fit parameters: (\d+)"
         params_match = match(params_regex, section)
         if params_match !== nothing
             results["Number of fit parameters"] = parse(Int, params_match[1])
         end
-
+        
         # Извлечение информации о количестве точек в подгонке
         points_regex = r"Number of points in fit = (\d+)"
         points_match = match(points_regex, section)
         if points_match !== nothing
             results["Number of points in fit"] = parse(Int, points_match[1])
         end
-
+        
         # Извлечение информации об Offset
         offset_regex = r"Offset: ([\d\.\-eE]+) ([\d\.\-eE]+) offset_e\*sqrt\(n\) = ([\d\.\-eE]+) n = (\d+)"
         offset_match = match(offset_regex, section)
@@ -226,171 +264,199 @@ function parse_tempo_output(output::String)
             results["offset_e*sqrt(n)"] = parse(Float64, offset_match[3])
             results["n (number of points)"] = parse(Int, offset_match[4])
         end
-
+        
         # Добавляем данные итерации в массив
         push!(iterations_data, results)
+
     end
 
     return iterations_data
 end
 
-#using PyPlot
-
-function plot_iterations_data(output_data)
-    # Получаем ключи первой итерации для определения, какие параметры имеются
-    params_keys = keys(output_data[1])
-    
-    # Определяем количество графиков
-    num_plots = length(params_keys)
-    
-    # Создаем сетку графиков (пример для 4 графиков в ряду)
-    num_cols = 4
-    num_rows = cld(num_plots, num_cols)  # округление вверх для числа строк
-    
-    fig, axs = subplots(num_rows, num_cols, figsize=(15, num_rows*3))
-    
-    # Сделаем индексацию одномерной для удобства, если всего один график
-    axs = reshape(axs, num_rows*num_cols)
-    
-    # Итерируем по параметрам и создаем графики
-    for (index, param_key) in enumerate(params_keys)
-        ax = axs[index]
-        values = [iteration_data[param_key] for iteration_data in output_data]
-        
-        # Строим график
-        ax.plot(values)
-        ax.set_title(param_key)
-        ax.set_xlabel("Iteration")
-        ax.set_ylabel("Value")
-        ax.grid(true)
-        
-        # Если достигли последнего ключа, прекращаем отрисовку
-        if index == num_plots
-            break
-        end
-    end
-    
-    # Если количество графиков не заполняет всю сетку, убираем пустые subplots
-    for i in (num_plots+1):(num_rows*num_cols)
-        fig.delaxes(axs[i])
-    end
-    
-    # Показываем график
-    tight_layout()
-    show()
+#--------------------------------------------------------------------------------------------------------------        
+# Настройки для глобальных итераций
+struct GlobalIterationSettings
+    iters::Int64
+    nits::Vector{Int64}
+    gain::Vector{Float64}
+    tparams_local::Vector{Vector{GeneralTempoParameter}}
 end
 
-# Теперь вызываем функцию с данными
-#plot_iterations_data(output_data)
+function Base.show(io::IO, gisets::GlobalIterationSettings)
+    println(io, "Global iteration settings:")
+    println(io, "   Number of iterations: ", gisets.iters)
+    for iter in 1:gisets.iters
+        println(io, "   Step # $iter:")
+        println(io, "       GAIN value: ", iter <= length(gisets.gain) ? gisets.gain[iter] : gisets.gain[end])
+        println(io, "       NITS value: ", iter <= length(gisets.nits) ? gisets.nits[iter] : gisets.nits[end])
+        println(io, "       Local Tempo parameters: ", gisets.tparams_local[iter])
+    end
+	return nothing
+end
 
+GlobalIterationSettings(;
+    iters,
+    nits = 3 * ones(Int64, iters),
+    gain = ones(Float64, iters),
+    tparams_local = [Vector{GeneralTempoParameter}() for _ in 1:iters]
+    ) = GlobalIterationSettings(
+        iters,
+        nits,
+        gain,
+        tparams_local
+        )
 
-
-function run_tempo_iterations(tsets::GeneralTempoSettings)
+function run_tempo_global_iter(bsets::BasicTempoSettings, gisets::GlobalIterationSettings)
     # Список для хранения результатов каждой итерации
     results = []
 
     # Удаление старых промежуточных .par файлов перед началом всех итераций
-    for iter_file in readdir(tsets.work_dir)
+    for iter_file in readdir(bsets.work_dir)
         if occursin("_iter", iter_file) && (occursin(".par", iter_file) || occursin(".out", iter_file))
-            rm(joinpath(tsets.work_dir, iter_file))  # Удаление файла
+            rm(joinpath(bsets.work_dir, iter_file))  # Удаление файла
         end
     end
 
     # Используем `splitext` для получения имени файла без расширения
-    base_par_name, ext = splitext(basename(tsets.par_file_init))
-
-    
+    base_par_name, ext = splitext(basename(bsets.par_file_init))
 
     # Если режим с итерациями, начните с начального .par файла
-    previous_par_file = tsets.par_file_init
+    previous_par_file = bsets.par_file_init
 
     # Определение пути к файлу new.par и его удаление если он существует
-    new_par_path = joinpath(tsets.work_dir, "new.par")
+    new_par_path = joinpath(bsets.work_dir, "new.par")
     if isfile(new_par_path)
         rm(new_par_path)  # Удаление файла, чтобы избежать путаницы с предыдущими запусками
     end
 
     # Перебор каждой итерации
-    for iter in 1:tsets.iters
+    for iter in 1:gisets.iters
         println("Итерация №$iter")
         
         # Обновление и применение настроек для текущей итерации
-        current_flags = tsets.flags
-        current_nits = iter <= length(tsets.nits) ? tsets.nits[iter] : tsets.nits[end]
-        current_gain = iter <= length(tsets.gain) ? tsets.gain[iter] : tsets.gain[end]
+        current_flags = bsets.flags
+        current_nits = iter <= length(gisets.nits) ? gisets.nits[iter] : gisets.nits[end]
+        current_gain = iter <= length(gisets.gain) ? gisets.gain[iter] : gisets.gain[end]
 
         # Добавление NITS и GAIN в флаги, если они указаны
         current_flags *= current_nits > 0 ? " -set NITS $current_nits" : ""
         current_flags *= current_gain != 1.0 ? " -set GAIN $current_gain" : ""
 
         # Создание и обновление объекта настроек для итерации
-        iter_tsets = deepcopy(tsets)
+    #    iter_bsets = deepcopy(bsets)
 
-        current_par_file = joinpath(tsets.work_dir, base_par_name * "_iter$(iter)" * ext)
+        current_par_file = joinpath(bsets.work_dir, base_par_name * "_iter$(iter)" * ext)
 
-        if tsets.keys.iterative_mode
-            # Если включен режим итераций, обновите iter_tsets для использования результатов предыдущей итерации
-            cp(joinpath(tsets.work_dir, previous_par_file), current_par_file, force=true)
+        if bsets.keys.iterative_mode
+            # Если включен режим итераций, обновите iter_bsets для использования результатов предыдущей итерации
+            cp(joinpath(bsets.work_dir, previous_par_file), current_par_file, force=true)
         else
             # В режиме независимых экспериментов всегда начинайте с исходного .par файла
-            cp(joinpath(tsets.work_dir, tsets.par_file_init), current_par_file, force=true)
+            cp(joinpath(bsets.work_dir, bsets.par_file_init), current_par_file, force=true)
         end
 
-        iter_tsets.par_file_init = current_par_file
+#        iter_bsets.par_file_init = current_par_file
 
+        iter_bsets = BasicTempoSettings(
+        bsets.work_dir,
+        bsets.version,
+        current_par_file,
+        bsets.tim_file,
+        current_flags,
+        bsets.keys,
+        bsets.tparams
+        )
 
-        iter_tsets.flags = current_flags
+#        iter_bsets.flags = current_flags
 
         # Обновляем локальные параметры для итерации, если они есть
-        local_tparams = iter <= length(tsets.tparams_local) ? tsets.tparams_local[iter] : []
+        local_tparams = iter <= length(gisets.tparams_local) ? gisets.tparams_local[iter] : []
 
         # Добавляем или обновляем локальные параметры для текущей итерации
         for lparam in local_tparams
             found = false
-            for (i, gparam) in enumerate(iter_tsets.tparams)
+            for (i, gparam) in enumerate(iter_bsets.tparams)
                 if gparam.name == lparam.name
-                    iter_tsets.tparams[i] = lparam  # Обновляем существующий параметр
+                    iter_bsets.tparams[i] = lparam  # Обновляем существующий параметр
                     found = true
                     break
                 end
             end
             if !found
-                push!(iter_tsets.tparams, lparam)  # Добавляем новый параметр
+                push!(iter_bsets.tparams, lparam)  # Добавляем новый параметр
             end
         end
 
         # Запуск tempo с текущими настройками итерации
-        output, stderr_output = run_tempo_single(iter_tsets)
+        parsed_output, output, stderr_output = run_tempo_basic(iter_bsets)
 
-        # Проверка наличия ошибок и неправильных результатов
-        if tsets.keys.iterative_mode && (contains(stderr_output, "Ошибка") || !isfile(new_par_path) || contains(read(new_par_path, String), "NaN"))
-            println("Обнаружена ошибка или неправильные результаты. Остановка итераций.")
-            break
+        # Проверка наличия ошибок и неправильных результатов TODO:stderr_output
+        if bsets.keys.iterative_mode
+            # Сразу проверяем наличие ошибок в stderr_output и output
+            if contains(stderr_output, "Ошибка") || contains(output, "NaN") || contains(output, "ERROR")
+                println("Обнаружена ошибка в выводе. Остановка итераций.")
+                break
+            end
+        
+            # Проверяем существование файла
+            if !isfile(new_par_path)
+                println("Файл new_par_path не найден. Остановка итераций.")
+                break
+            end
         end
 
         cp(new_par_path, current_par_file, force=true)
 
         # Форматирование и проверка файла .par после итерации
 
-        formatted_par_file = format_and_validate_par_file(current_par_file, iter, tsets)
+        formatted_par_file = format_and_validate_par_file(current_par_file, output, bsets)
 
         # Обновление ссылки на файл для следующей итерации и сохранение результатов
-        if tsets.keys.iterative_mode
+        if bsets.keys.iterative_mode
             # Только в режиме итераций обновляем previous_par_file
             previous_par_file = current_par_file
-            push!(results, (output, stderr_output))
         end
-        push!(results, (output, stderr_output))
+        append!(results, parsed_output)
+        println(parsed_output)
     end
 
     return results
 end
 
+#--------------------------------------------------------------------------------------------------------------
+# Настройки для массива значений параметра (если у вас есть такой функционал)
+struct ParameterSweepSettings
+    param_name::String
+    param_values::Vector{Float64}
+    # Другие потенциальные поля...
+end
+
+
+#--------------------------------------------------------------------------------------------------------------
+# Общие настройки Tempo, которые могут включать различные расширенные настройки
+mutable struct GeneralTempoSettings{T <: AbstractTempoVersion}
+    basic_settings::BasicTempoSettings{T}
+    global_iter_settings::Union{GlobalIterationSettings, Nothing}
+    param_sweep_settings::Union{ParameterSweepSettings, Nothing}
+end
+
+# Конструкторы
+function GeneralTempoSettings(
+    basic_settings::BasicTempoSettings{T}, 
+    global_iter_settings::Union{GlobalIterationSettings, Nothing} = nothing,
+    param_sweep_settings::Union{ParameterSweepSettings, Nothing} = nothing
+    ) where {T <: AbstractTempoVersion}
+    return GeneralTempoSettings{T}(basic_settings, global_iter_settings, param_sweep_settings)
+end
+
+#--------------------------------------------------------------------------------------------------------------
 
 
 
 
 
+
+#--------------------------------------------------------------------------------------------------------------
 
 mutable struct GeneralTempoFramework{T1 <: TestParameters, T2 <: RefinementSettings}
     tsets::GeneralTempoSettings

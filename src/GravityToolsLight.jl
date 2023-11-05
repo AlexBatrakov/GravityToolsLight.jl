@@ -35,7 +35,12 @@ export GeneralTempoParameter, TP, TempoParFile, read_par_file!, write_par_file, 
 #, get_TempoParameter, modify_par_file, run_tempo, get_par_file_work, read_params
 
 include("GeneralTempoFramework.jl")
-export TempoVersion, tempo, tempo2, run_tempo_single, run_tempo_iterations, plot_iterations_data, GeneralTempoSettings, TempoKeys, GeneralTempoFramework, calculate!
+export TempoVersion, Tempo, Tempo2, run_tempo_basic, run_tempo_global_iter, GeneralTempoSettings, TempoKeys, GeneralTempoFramework, calculate!
+export BasicTempoSettings, GlobalIterationsSettings, ParameterSweepSettings, NewGeneralTempoSettings
+
+
+include("PlotTools.jl")
+export plot_fit_results, plot_fit_results_all
 
 include("EFACs_EQUADs.jl")
 export calculate_EFACs_EQUADs

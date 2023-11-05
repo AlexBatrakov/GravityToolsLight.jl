@@ -20,24 +20,61 @@ pygui(true)
 
 #-------------------------------------------------------------------------------------
 
-tsets = GeneralTempoSettings(
+# tsets = GeneralTempoSettings(
+#     work_dir = "/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/model_WN",
+#     version = Tempo2(),
+#     par_file_init = "J1141-6545_full_DDSTG_RN.par",
+#     tim_file = "J1141-6545_full.tim",
+#     flags = "-nobs 34000 -newpar -writeres -residuals",
+#     tparams = [TP("EOS", "BSk22"), TP("COMP_TYPE", "WD"), TP("ALPHA0", 0.0), TP("BETA0", 0.0), TP("NITS", 3)],
+#     keys = TempoKeys(silent=true, print_output=true, iterative_mode=true, fit_EFACs_EQUADs=true),
+#     iters = 3,
+#     nits = [3,3,3],
+#     tparams_local = [
+#         [TP("M2", 1.0, flag=0)],
+#         [TP("M2", flag=1)],
+#         [TP("M2", flag=1)]
+#         ]
+#     )
+
+# parsed_results, output, stderr_output = run_tempo_single(tsets)
+
+# GravityToolsLight.plot_iterations_data(parsed_results)
+
+# plot_fit_results(parsed_results)
+
+basic_settings = BasicTempoSettings(
     work_dir = "/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/model_WN",
-    version = tempo2,
+    version = Tempo2(),
     par_file_init = "J1141-6545_full_DDSTG_RN.par",
     tim_file = "J1141-6545_full.tim",
     flags = "-nobs 34000 -newpar -writeres -residuals",
-    tparams = [TP("EOS", "BSk22"), TP("COMP_TYPE", "WD"), TP("ALPHA0", 0.0), TP("BETA0", 0.0), TP("NITS", 3) ],
-    keys = TempoKeys(silent=true, print_output=true, iterative_mode=true, fit_EFACs_EQUADs=true),
+    tparams = [TP("EOS", "BSk22"), TP("COMP_TYPE", "WD"), TP("ALPHA0", 0.0), TP("BETA0", 0.0), TP("NITS", 3)],
+    keys = TempoKeys(silent=true, print_output=true, iterative_mode=true, fit_EFACs_EQUADs=true)
+    )
+
+parsed_output, output, stderr_output = run_tempo_basic(basic_settings)
+plot_fit_results(parsed_results)
+
+global_iter_settings = GlobalIterationSettings(
     iters = 3,
     nits = [3,3,3],
     tparams_local = [
-        [TP("M2", 1.0, flag=0)],
-        [TP("M2", flag=1)],
+        [TP("MTOT", flag=0), TP("M2", 1.0, flag=0)],
+        [TP("MTOT", flag=1), TP("M2", 1.0, flag=0)],
         [TP("M2", flag=1)]
-    ]
+        ]
     )
 
-parsed_results, output, stderr_output = run_tempo_single(tsets)
+results = run_tempo_global_iter(basic_settings, global_iter_settings)
+plot_fit_results(results)
+
+parameter_sweep_settings = ParameterSweepSettings(
+    "XPBDOT",
+    [-1e-14, 0.0, 1e-14]
+)
+
+general_settings = NewGeneralTempoSettings(basic_settings, global_iter_settings, parameter_sweep_settings)
 
 # test = GeneralTest(
 #     psrname = "J1141-6545",
