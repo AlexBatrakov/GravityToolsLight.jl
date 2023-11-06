@@ -1,9 +1,11 @@
 using Documenter
 using GravityToolsLight
 
-- name: Install Python dependencies
+- name: Set up Python and Install matplotlib
   run: |
-    julia --project=docs/ -e 'using Pkg; Pkg.add("Conda"); using Conda; Conda.add("matplotlib")'
+    sudo apt-get update
+    sudo apt-get install -y python3-pip
+    pip install matplotlib
 
 
 makedocs(
