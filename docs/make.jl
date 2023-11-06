@@ -9,8 +9,7 @@ makedocs(
         "Home" => "index.md",
         "Tempo Versions" => "abstract_tempo.md",
         # Add more pages as needed
-    ],
-    checkdocs = :none
+    ]
 )
 
 # Optionally, include to push the docs to the gh-pages branch
