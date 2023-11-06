@@ -1,6 +1,11 @@
 using Documenter
 using GravityToolsLight
 
+- name: Install Python dependencies
+  run: |
+    julia --project=docs/ -e 'using Pkg; Pkg.add("Conda"); using Conda; Conda.add("matplotlib")'
+
+
 makedocs(
     sitename = "GravityToolsLight Documentation",
     modules = [GravityToolsLight],
