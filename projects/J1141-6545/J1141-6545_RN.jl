@@ -50,13 +50,13 @@ basic_settings = BasicTempoSettings(
     tim_file = "J1141-6545_full.tim",
     flags = "-nobs 34000 -newpar -writeres -residuals",
     tparams = [TP("EOS", "BSk22"), TP("COMP_TYPE", "WD"), TP("ALPHA0", 0.0), TP("BETA0", 0.0), TP("NITS", 3)],
-    keys = TempoKeys(silent=true, print_output=true, iterative_mode=true, fit_EFACs_EQUADs=true)
+    keys = BasicTempoKeys(silent=true, print_output=true, iterative_mode=true, fit_EFACs_EQUADs=true)
     )
 
 parsed_output, output, stderr_output = run_tempo_basic(basic_settings)
-plot_fit_results(parsed_results)
+plot_fit_results(parsed_output)
 
-global_iter_settings = GlobalIterationSettings(
+global_iter_settings = GlobalIterationsSettings(
     iters = 3,
     nits = [3,3,3],
     tparams_local = [
@@ -66,8 +66,8 @@ global_iter_settings = GlobalIterationSettings(
         ]
     )
 
-results = run_tempo_global_iter(basic_settings, global_iter_settings)
-plot_fit_results(results)
+parsed_output = run_tempo_global_iters(basic_settings, global_iter_settings)
+plot_fit_results(parsed_output)
 
 parameter_sweep_settings = ParameterSweepSettings(
     "XPBDOT",
