@@ -1,13 +1,6 @@
 using Documenter
 using GravityToolsLight
 
-- name: Set up Python and Install matplotlib
-  run: |
-    sudo apt-get update
-    sudo apt-get install -y python3-pip
-    pip install matplotlib
-
-
 makedocs(
     sitename = "GravityToolsLight Documentation",
     modules = [GravityToolsLight],

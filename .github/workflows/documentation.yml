@@ -19,9 +19,16 @@ jobs:
         with:
           version: '1.x'
 
+      - name: Set up Python and Install matplotlib
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip install matplotlib
+
       - name: Install dependencies
         run: |
           julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+
 
       - name: Build and deploy
         env:
