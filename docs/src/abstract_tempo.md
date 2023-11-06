@@ -8,7 +8,6 @@ get_tempo_command(::AbstractTempoVersion)
 ```
 
 ## Tempo
-sas
 
 ```@docs
 Tempo
