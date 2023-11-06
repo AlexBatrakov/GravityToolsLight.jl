@@ -20,17 +20,17 @@ Please refer to the [Documentation](#) for a detailed guide on installing and us
 ```julia
 using Pkg
 Pkg.add("GravityToolsLight")
+```
 
-
-## **Contributing**
+## Contributing
 
 Contributions are more than welcome! If you have suggestions for improvements or want to contribute code, please feel free to fork the repository, make your changes, and submit a pull request.
 
-## **License**
+## License
 
 GravityToolsLight is licensed under the MIT License. Feel free to use it, contribute, and spread the word!
 
-## **Acknowledgments**
+## Acknowledgments
 
 GravityToolsLight is being actively developed and maintained by [Your Name] and contributors from the scientific community. We thank all those who have offered valuable insights, contributed code, and used the library in their research.
 
