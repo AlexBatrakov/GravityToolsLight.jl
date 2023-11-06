@@ -11,7 +11,8 @@ Welcome to `GravityToolsLight`, an open-source Julia library designed to facilit
 
 ## Getting Started
 
-Please refer to the [Documentation](#) for a detailed guide on installing and using `GravityToolsLight`. Examples and tutorials can also be found in the `/examples` directory to help you get started with common tasks.
+Please refer to the [Documentation](https://alexbatrakov.github.io/GravityToolsLight.jl/#)
+ for a detailed guide on installing and using `GravityToolsLight`. Examples and tutorials can also be found in the `/examples` directory to help you get started with common tasks.
 
 ## Installation
 
