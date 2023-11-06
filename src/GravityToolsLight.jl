@@ -30,9 +30,10 @@ include("AdaptiveGridFramework/AdaptiveRefinement2DGrid.jl")
 export FullUnit, DiffUnit, ContourUnit, DiffContourUnit, RefinementSettings, AdaptiveRefinement2DGrid, precalculate_2DGrid!, refine_2DGrid, calculate_2DGrid!
 
 # GeneralTempoFramework
-# Включение и экспорт из GeneralTempoFramework
+# Include and export from GeneralTempoFramework
 include("GeneralTempoFramework/AbstractTempo.jl")
-export AbstractTempoVersion, Tempo, Tempo2, get_tempo_directory, get_tempo_command
+export AbstractTempoVersion, Tempo, Tempo2, get_tempo_directory, get_tempo2_directory, get_tempo_command
+
 
 # Включение и экспорт из Parameters
 include("GeneralTempoFramework/Parameters/TempoParameters.jl")

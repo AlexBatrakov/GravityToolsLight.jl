@@ -73,4 +73,3 @@ We welcome contributions to `GravityToolsLight`! If you'd like to contribute, pl
 ## License
 
 `GravityToolsLight` is released under the MIT License. See the [LICENSE](LICENSE) file for more details."
-
