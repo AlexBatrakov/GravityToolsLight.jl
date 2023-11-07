@@ -17,8 +17,8 @@ makedocs(
 deploydocs(
     root = joinpath(dirname(pathof(GravityToolsLight)), "..", "docs"),
     repo = "github.com/AlexBatrakov/GravityToolsLight.jl.git",
-    target = "dev"
-    dirname = "docs"
+    target = "dev",
+    dirname = "docs",
     deploy_config = Documenter.GitHubActions(),
     branch = "gh-pages"
 )
