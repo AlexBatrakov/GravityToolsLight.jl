@@ -1,7 +1,6 @@
 # Tempo Versions
 
 ## Abstract Tempo Version
-even more text
 
 ```@docs
 AbstractTempoVersion
