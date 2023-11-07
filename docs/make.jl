@@ -2,9 +2,9 @@ using Documenter
 using GravityToolsLight
 
 makedocs(
+    root = joinpath(dirname(pathof(GravityToolsLight)), "..", "docs"),
     sitename = "GravityToolsLight Documentation",
     modules = [GravityToolsLight],
-    build   = "build",
     pages = [
         "Home" => "index.md",
         "Tempo Versions" => "abstract_tempo.md",
@@ -16,7 +16,6 @@ makedocs(
 deploydocs(
     root = joinpath(dirname(pathof(GravityToolsLight)), "..", "docs"),
     repo = "github.com/AlexBatrakov/GravityToolsLight.jl",
-    target   = "dev",
     deploy_config = Documenter.GitHubActions(),
     branch = "gh-pages"
 )
