@@ -3,6 +3,7 @@ using GravityToolsLight
 
 makedocs(
     root = joinpath(dirname(pathof(GravityToolsLight)), "..", "docs"),
+    build   = "build",
     sitename = "GravityToolsLight Documentation",
     modules = [GravityToolsLight],
     pages = [
@@ -14,8 +15,10 @@ makedocs(
 
 # Optionally, include to push the docs to the gh-pages branch
 deploydocs(
-    repo = "github.com/AlexBatrakov/GravityToolsLight.jl",
-    target = "dev",
+    root = joinpath(dirname(pathof(GravityToolsLight)), "..", "docs"),
+    repo = "github.com/AlexBatrakov/GravityToolsLight.jl.git",
+    target = "dev"
+    dirname = "docs"
     deploy_config = Documenter.GitHubActions(),
     branch = "gh-pages"
 )
