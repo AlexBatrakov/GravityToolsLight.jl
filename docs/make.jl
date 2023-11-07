@@ -14,9 +14,9 @@ makedocs(
 
 # Optionally, include to push the docs to the gh-pages branch
 deploydocs(
-    root = "docs",
+    root = joinpath(dirname(pathof(GravityToolsLight)), "..", "docs"),
     repo = "github.com/AlexBatrakov/GravityToolsLight.jl",
-    target   = "dev",
+    target   = "build",
     deploy_config = Documenter.GitHubActions(),
     branch = "gh-pages"
 )
