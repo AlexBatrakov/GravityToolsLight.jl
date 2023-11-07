@@ -4,6 +4,7 @@ using GravityToolsLight
 makedocs(
     sitename = "GravityToolsLight Documentation",
     modules = [GravityToolsLight],
+    build   = "dev",
     pages = [
         "Home" => "index.md",
         "Tempo Versions" => "abstract_tempo.md",
@@ -14,7 +15,7 @@ makedocs(
 # Optionally, include to push the docs to the gh-pages branch
 deploydocs(
     repo = "github.com/AlexBatrakov/GravityToolsLight.jl",
-    dirname = "docs",
+    build   = "dev",
     deploy_config = Documenter.GitHubActions(),
     branch = "gh-pages"
 )
