@@ -9,8 +9,7 @@ makedocs(
         "Home" => "index.md",
         "Tempo Versions" => "abstract_tempo.md",
         # Add more pages as needed
-    ],
-    build_dir = "docs/build"
+    ]
 )
 
 # Optionally, include to push the docs to the gh-pages branch
@@ -19,7 +18,6 @@ deploydocs(
     repo = "github.com/AlexBatrakov/GravityToolsLight.jl",
     deploy_config = Documenter.GitHubActions(),
     target = "site", 
-    branch = "gh-pages",
-    build_dir = "docs/build",
+    branch = "gh-pages"
 )
  
