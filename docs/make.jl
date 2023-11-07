@@ -2,7 +2,6 @@ using Documenter
 using GravityToolsLight
 
 makedocs(
-    root = joinpath(dirname(pathof(GravityToolsLight)), "..", "docs"),
     sitename = "GravityToolsLight Documentation",
     modules = [GravityToolsLight],
     pages = [
@@ -14,10 +13,9 @@ makedocs(
 
 # Optionally, include to push the docs to the gh-pages branch
 deploydocs(
-    root = joinpath(dirname(pathof(GravityToolsLight)), "..", "docs"),
     repo = "github.com/AlexBatrakov/GravityToolsLight.jl",
+    dirname = "docs"
     deploy_config = Documenter.GitHubActions(),
-    target = "site", 
     branch = "gh-pages"
 )
  
