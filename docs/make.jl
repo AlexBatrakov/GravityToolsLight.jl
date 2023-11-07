@@ -3,6 +3,7 @@ using GravityToolsLight
 
 makedocs(
     sitename = "GravityToolsLight Documentation",
+    format = Documenter.HTML(),
     modules = [GravityToolsLight],
     pages = [
         "Home" => "index.md",
