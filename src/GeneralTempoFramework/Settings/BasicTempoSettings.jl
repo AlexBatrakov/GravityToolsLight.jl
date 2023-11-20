@@ -1,63 +1,55 @@
 #--------------------------------------------------------------------------------------------------------------
-# BasicTempoSettings.jl
 
-"""BasicTempoKeys"""
-Represents the basic configuration keys for running the Tempo program.
-
-Fields:
-- `silent::Bool`: If true, Tempo will run in silent mode without printing to the standard output.
-- `print_output::Bool`: If true, the output of Tempo will be printed.
-- `iterative_mode::Bool`: If true, Tempo will run in an iterative mode for fitting.
-- `fit_EFACs_EQUADs::Bool`: If true, Tempo will fit for EFACs and EQUAD parameters during the run.
-
-Constructor:
-- `BasicTempoKeys(;silent, print_output, iterative_mode, fit_EFACs_EQUADs)`: Creates a new `BasicTempoKeys` instance with the provided settings.
 """
+    struct BasicTempoKeys
 
-```julia
+Holds the key settings for running the Tempo software.
+
+# Fields
+- `silent::Bool`: If true, Tempo runs without printing progress to the console.
+- `print_output::Bool`: If true, the output of Tempo is printed.
+- `iterative_mode::Bool`: If true, Tempo runs in iterative mode.
+- `fit_EFACs_EQUADs::Bool`: If true, EFAC and EQUAD parameters are fitted.
+
+# Constructor
+    BasicTempoKeys(;silent = true, print_output = false, iterative_mode = true, fit_EFACs_EQUADs = false)
+"""
 struct BasicTempoKeys
     silent::Bool
     print_output::Bool
+    save_internal_iterations::Bool
     iterative_mode::Bool
     fit_EFACs_EQUADs::Bool
-    BasicTempoKeys(;silent = true, print_output = false, iterative_mode=true, fit_EFACs_EQUADs::Bool = false) = new(silent, print_output, iterative_mode, fit_EFACs_EQUADs)
+    BasicTempoKeys(;silent = true, print_output = false, save_internal_iterations=false, iterative_mode=true, fit_EFACs_EQUADs::Bool = false) = new(silent, print_output, save_internal_iterations, iterative_mode, fit_EFACs_EQUADs)
 end
-```
 
-"""Base.show(io::IO, keys::BasicTempoKeys)"""
-Display the configuration keys for Tempo in a formatted way.
-
-- `io::IO`: The IO stream to print to.
-- `keys::BasicTempoKeys`: The keys to display.
-"""
-
-```julia
+# Implementation of the show method for BasicTempoKeys
 function Base.show(io::IO, keys::BasicTempoKeys)
     println(io, "Tempo keys:")
     print(io, "        Silent mode: ", keys.fit_EFACs_EQUADs)
     print(io, "        Fit EFAC and EQUAD parameters: ", keys.fit_EFACs_EQUADs)
     return nothing
 end
-```
 
 #--------------------------------------------------------------------------------------------------------------
-"""BasicTempoSettings{T <: AbstractTempoVersion}"""
-Represents the basic settings required to run a Tempo analysis.
 
-Fields:
-- `work_dir::String`: The working directory for Tempo runs.
-- `version::T`: The Tempo version to use, as a subtype of `AbstractTempoVersion`.
-- `par_file_init::String`: The initial parameter file for the pulsar.
-- `tim_file::String`: The file containing the times of arrival (TOAs).
-- `flags::String`: Additional flags for the Tempo run.
-- `keys::BasicTempoKeys`: The keys indicating the basic run settings.
-- `tparams::Vector{GeneralTempoParameter}`: A vector of general Tempo parameters to be used in the run.
-
-Constructor:
-- `BasicTempoSettings(;work_dir, version, par_file_init, tim_file, flags, keys, tparams)`: Creates a new `BasicTempoSettings` instance with the provided settings.
 """
+    struct BasicTempoSettings{T <: AbstractTempoVersion}
 
-```julia
+Holds all the basic settings required to run a single instance of the Tempo software.
+
+# Fields
+- `work_dir::String`: The working directory for the Tempo run.
+- `version::T`: The version of Tempo to be used, must be a subtype of `AbstractTempoVersion`.
+- `par_file_init::String`: The initial parameter file for Tempo.
+- `tim_file::String`: The timing data file for Tempo.
+- `flags::String`: Additional command line flags for Tempo.
+- `keys::BasicTempoKeys`: Key settings for running Tempo.
+- `tparams::Vector{GeneralTempoParameter}`: A vector of tempo parameters to be used.
+
+# Constructor
+    BasicTempoSettings(;work_dir, version, par_file_init, tim_file, flags = "", keys = BasicTempoKeys(), tparams = GeneralTempoParameter[])
+"""
 struct BasicTempoSettings{T <: AbstractTempoVersion}
     work_dir::String
     version::T
@@ -67,16 +59,8 @@ struct BasicTempoSettings{T <: AbstractTempoVersion}
     keys::BasicTempoKeys
     tparams::Vector{GeneralTempoParameter}
 end
-```
 
-"""Base.show(io::IO, bsets::BasicTempoSettings)"""
-Display the basic Tempo settings in a formatted way.
-
-- `io::IO`: The IO stream to print to.
-- `bsets::BasicTempoSettings`: The settings to display.
-"""
-
-```julia
+# Implementation of the show method for BasicTempoSettings
 function Base.show(io::IO, bsets::BasicTempoSettings)
     println(io, "Basic Tempo settings:")
     println(io, "   Working directory: ", bsets.work_dir)
@@ -88,9 +72,8 @@ function Base.show(io::IO, bsets::BasicTempoSettings)
     println(io, "   Tempo parameters used:", bsets.tparams)
     return nothing
 end
-```
 
-```julia
+# Constructor implementation
 BasicTempoSettings(;
     work_dir,
     version,
@@ -108,4 +91,4 @@ BasicTempoSettings(;
         keys,
         tparams
         )
-```
+

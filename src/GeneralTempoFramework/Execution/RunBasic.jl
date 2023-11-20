@@ -44,7 +44,9 @@ function run_tempo_basic(bsets::BasicTempoSettings)
         println("Обнаружена ошибка в выводе. Ошибка выполнения $(typeof(bsets.version)).")
     end
     
-    parsed_output = parse_tempo_output(output, bsets.version)
+    # parsed_output = parse_tempo_output(output, bsets.version)
+
+    detailed_results, error_result = parse_all_interations_tempo_output(output, typeof(bsets.version))
 
     # Если нужно, печатаем вывод в файл
     if bsets.keys.print_output
@@ -54,7 +56,7 @@ function run_tempo_basic(bsets::BasicTempoSettings)
     end
 
     upd_par_path = generate_par_file_path(bsets.par_file_init, "upd", work_dir)
-
+    par_file_upd = TempoParFile()
 
     # Проверяем существование файла
     if !isfile(new_par_path)
@@ -64,7 +66,18 @@ function run_tempo_basic(bsets::BasicTempoSettings)
         par_file_upd = format_and_validate_par_file(upd_par_path, output, bsets)
     end
 
-    return parsed_output, output, stderr_output
+    calculated_results = CalculatedResults(0.0)
+    error_output = TempoRunErrorOutput(stderr_output)
+
+    full_results = SingleTempoRunResult(
+        detailed_results[end],
+        calculated_results,
+        error_output,
+        par_file_upd,
+        detailed_results
+    )
+
+    return full_results
 end
 
 
@@ -113,7 +126,56 @@ function parse_tempo_output(output, ::Type{Tempo})
     # Реализация парсера для Tempo
 end
 
-function parse_tempo_output(output::String, ::Type{Tempo2})
+function parse_tempo_output(output::String, ::Type{Tempo2})::Vector{BasicTempoOutputResult}
+    # Разделяем выходные данные на секции по итерациям
+    sections = split(output, "Complete fit\n\n\n")
+    
+    # Убираем первый элемент, если он не содержит данных об итерации
+    if !contains(sections[1], "RMS pre-fit residual")
+        sections = sections[2:end]
+    end
+
+    # Создаем массив для сохранения данных
+    iterations_data = BasicTempoOutputResult[]
+
+    for section in sections
+        # Создаем BasicTempoOutputResult для текущей итерации
+        rms_regex = r"RMS pre-fit residual = (\d+\.\d+) \(us\), RMS post-fit residual = (\d+\.\d+) \(us\)"
+        chisq_regex = r"Fit Chisq = (\d+\.?\d*[eE]?[-+]?\d*)\s+Chisqr/nfree = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?/(\d+) = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?\s+pre/post = (\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)"
+        params_regex = r"Number of fit parameters: (\d+)"
+        points_regex = r"Number of points in fit = (\d+)"
+        offset_regex = r"Offset: ([\d\.\-eE]+) ([\d\.\-eE]+) offset_e\*sqrt\(n\) = ([\d\.\-eE]+) n = (\d+)"
+
+        # Извлекаем значения
+        rms_match = match(rms_regex, section)
+        chisq_match = match(chisq_regex, section)
+        params_match = match(params_regex, section)
+        points_match = match(points_regex, section)
+        offset_match = match(offset_regex, section)
+
+        # Создаем объект BasicTempoOutputResult
+        result = BasicTempoOutputResult(
+            parse(Float64, chisq_match[1]),  # fit_chisq
+            parse(Float64, chisq_match[2]),  # chisqr
+            parse(Int, points_match[1]),     # number_of_points_in_fit
+            parse(Int, params_match[1]),     # number_of_fit_parameters
+            parse(Float64, rms_match[1]),    # rms_pre_fit_residual_us
+            parse(Int, chisq_match[3]),      # nfree
+            (parse(Float64, offset_match[1]), parse(Float64, offset_match[2])),  # offset
+            parse(Float64, offset_match[3]), # offset_e_sqrt_n
+            parse(Float64, chisq_match[5]),  # pre_post
+            parse(Float64, rms_match[2]),    # rms_post_fit_residual_us
+            parse(Float64, chisq_match[4])   # chisqr_nfree
+        )
+
+        push!(iterations_data, result)
+    end
+
+    return iterations_data
+end
+
+
+function parse_tempo_output_old(output::String, ::Type{Tempo2})
     # Разделяем выходные данные на секции по итерациям
     sections = split(output, "Complete fit\n\n\n")
     
@@ -139,7 +201,7 @@ function parse_tempo_output(output::String, ::Type{Tempo2})
         end
         
         # Обновляем регулярное выражение и процедуру извлечения информации о Fit Chisq, Chisqr/nfree и pre/post
-        chisq_regex = r"Fit Chisq = (\d+\.?\d*[eE]?[-+]?\d*)\s+Chisqr/nfree = (\d+\.\d+)/(\d+) = (\d+\.\d+)\s+pre/post = (\d+(?:\.\d+)?)"
+        chisq_regex = r"Fit Chisq = (\d+\.?\d*[eE]?[-+]?\d*)\s+Chisqr/nfree = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?/(\d+) = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?\s+pre/post = (\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)"
         chisq_match = match(chisq_regex, section)
         if chisq_match !== nothing
             results["Fit Chisq"] = parse(Float64, chisq_match[1])

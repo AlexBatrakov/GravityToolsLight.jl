@@ -31,15 +31,16 @@ export FullUnit, DiffUnit, ContourUnit, DiffContourUnit, RefinementSettings, Ada
 
 # GeneralTempoFramework
 # Include and export from GeneralTempoFramework
-include("GeneralTempoFramework/AbstractTempo.jl")
+# Включение и экспорт из Essentials
+include("GeneralTempoFramework/Essentials/AbstractTempo.jl")
 export AbstractTempoVersion, Tempo, Tempo2, get_tempo_directory, get_tempo2_directory, get_tempo_command
-
-
-# Включение и экспорт из Parameters
-include("GeneralTempoFramework/Parameters/TempoParameters.jl")
+include("GeneralTempoFramework/Essentials/TempoParameters.jl")
 export GeneralTempoParameter, TP, extract_GeneralTempoParameter, get_par_file_representation
-include("GeneralTempoFramework/Parameters/TempoParFile.jl")
+include("GeneralTempoFramework/Essentials/TempoParFile.jl")
 export TempoParFile, read_par_file!, write_par_file, update_par_file, update_par_file, modify_tparam!, extend_par_file!, generate_par_file_path
+include("GeneralTempoFramework/Essentials/TempoOutputResults.jl")
+export AbstractTempoResult, BasicTempoOutputResult, FitParameter, DetailedTempoOutputResult, TempoOutputError
+export CalculatedResults, TempoRunErrorOutput, SingleTempoRunResult
 
 # Включение и экспорт из Settings
 include("GeneralTempoFramework/Settings/BasicTempoSettings.jl")
@@ -47,7 +48,7 @@ export BasicTempoSettings, BasicTempoKeys
 include("GeneralTempoFramework/Settings/GlobalItersSettings.jl")
 export GlobalIterationsSettings
 include("GeneralTempoFramework/Settings/ParameterSweepSettings.jl")
-export ParameterSweep
+export ParameterSweepSettings
 include("GeneralTempoFramework/Settings/GeneralSettings.jl")
 export GeneralSettings, GeneralTempoFramework
 

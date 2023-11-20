@@ -4,7 +4,28 @@
 # Set precision for BigFloat to 80 digits
 setprecision(BigFloat, 80)
 
-# Definition of a general tempo parameter structure
+"""
+    mutable struct GeneralTempoParameter
+
+Represents a general parameter used in Tempo software.
+
+# Fields
+- `name::String`: The name of the parameter.
+- `name_symbol::Symbol`: The symbol representation of the parameter name.
+- `value::Union{Int64, BigFloat, String, Nothing}`: The value of the parameter, supporting various types.
+- `flag::Union{Int64, Nothing}`: An optional flag associated with the parameter.
+- `uncertainty::Union{BigFloat, Nothing}`: The uncertainty associated with the parameter value, if applicable.
+
+# Constructors
+- `GeneralTempoParameter(name::String, value=nothing; flag=nothing, uncertainty=nothing)`: Creates a new parameter, converting `Float64` to `BigFloat` and setting default values for flag and uncertainty.
+- `GeneralTempoParameter(var::ValueVariable)`: Converts from `ValueVariable` type to `GeneralTempoParameter`.
+
+# Methods
+- `setproperty!(x::GeneralTempoParameter, f::Symbol, v::Float64)`: Assigns a `Float64` value to the parameter, converting it to `BigFloat`.
+- `extract_GeneralTempoParameter(line::String)`: Parses a string line to extract a `GeneralTempoParameter`.
+- `get_par_file_representation(tparam::GeneralTempoParameter)`: Returns a formatted representation of a `GeneralTempoParameter` for a `.par` file.
+
+"""
 mutable struct GeneralTempoParameter
     name::String
     name_symbol::Symbol
@@ -77,37 +98,38 @@ function parse_tparam_field(value_str)
     return String(value_str)
 end
 
-# Constructor that parses a string line to extract GeneralTempoParameter
+# Parses a string line to create a GeneralTempoParameter object.
+# Each line in the input string should be formatted as follows:
+# parameter_name value flag uncertainty
 function extract_GeneralTempoParameter(line::String)
-    # логика тут такая. Кажждая строчка выглядит так
-    # имя_параметра значение флаг погрешность
-
+    # Split the line into words to process each part
     line_split = split(line)
     n = length(line_split)
     line_parsed = parse_tparam_field.(line_split)
     line_parsed_types = typeof.(line_parsed)
 
-
-    # имя параметра может быть из одного слова или из трех
+    # The parameter name can be one word or a combination of three words
     if n >= 3 && line_parsed_types[1:3] == [String, String, String]
         n_name = 3
         name = join(line_split[1:3], " ")
     else
         n_name = 1
-        name =  String(line_split[1])
+        name = String(line_split[1])
     end
 
-    # значение всегда стоит после имени долину которого мы уже определили
+    # The value always follows the name whose length we've already determined
     value = n_name < n ? line_parsed[n_name + 1] : nothing
 
-    # после значения обычно стоит флаг, только если следующее число не является BigFloat
+    # After the value, there's usually a flag, only if the next number is not a BigFloat
     flag = n_name + 1 < n && !isa(line_parsed[n_name + 2], BigFloat) ? line_parsed[n_name + 2] : nothing
 
-    #после флага или сразу после значения может стоять погрешность, если она отсуствует, то она не определена
+    # After the flag or right after the value, there may be an uncertainty, if it is absent, then it is undefined
     uncertainty = n_name + 1 < n && isa(line_parsed[n_name + 2], BigFloat) ? line_parsed[n_name + 2] : n_name + 2 < n ? line_parsed[n_name + 3] : nothing
 
+    # Return a new GeneralTempoParameter object with the extracted values
     return GeneralTempoParameter(name, value, flag=flag, uncertainty=uncertainty)
 end
+
 
 # Utility function to align a string to a specified width
 function align_str(s::String, n::Int)
@@ -154,24 +176,23 @@ function get_par_file_representation(tparam::GeneralTempoParameter)
     return line
 end
 
-# function format_for_value(value::Number)
-#     if abs(value) < 1e-3 || abs(value) > 1e3
-#         return "%.16e"
-#     else
-#         return "%.16f"
-#     end
-# end
+# Функция для обновления или добавления параметра в список tparams
+function update_or_add_tparam(tparams::Vector{GeneralTempoParameter}, tparam::GeneralTempoParameter)
+    # Поиск параметра в списке
+    found = false
+    for (i, existing_tparam) in enumerate(tparams)
+        if existing_tparam.name == tparam.name
+            tparams[i] = tparam # Обновление значения параметра
+            found = true
+            break
+        end
+    end
 
-# format_for_value(value::String) = "%s"
+    # Добавление параметра, если он не был найден
+    if !found
+        push!(tparams, tparam)
+    end
 
-# function print_tparam(tp::GeneralTempoParameter)
-#     val_fmt = format_for_value(tp.value)
-#     unc_fmt = format_for_value(tp.uncertainty)
-    
-#     val_str = @sprintf(val_fmt, tp.value)
-#     unc_str = tp.uncertainty !== nothing ? @sprintf(unc_fmt, tp.uncertainty) : ""
-
-#     println("$(rpad(tp.name, 15)) $(lpad(val_str, 25)) $(tp.flag) $(lpad(unc_str, 25))")
-# end
-
+    return tparams
+end
 

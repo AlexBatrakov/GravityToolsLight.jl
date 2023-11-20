@@ -8,6 +8,10 @@ mutable struct TempoParFile
     order::Vector{Symbol}
 end
 
+function TempoParFile()
+    return TempoParFile("", Dict{Symbol,GeneralTempoParameter}(), Vector{Symbol}())
+end
+
 function TempoParFile(par_file_path::String; new_name_suffix="")
     par_file = TempoParFile(par_file_path, Dict{Symbol,GeneralTempoParameter}(), Vector{Symbol}())
     read_par_file!(par_file)

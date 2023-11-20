@@ -50,15 +50,16 @@ basic_settings = BasicTempoSettings(
     tim_file = "J1141-6545_full.tim",
     flags = "-nobs 34000 -newpar -writeres -residuals",
     tparams = [TP("EOS", "BSk22"), TP("COMP_TYPE", "WD"), TP("ALPHA0", 0.0), TP("BETA0", 0.0), TP("NITS", 3)],
-    keys = BasicTempoKeys(silent=true, print_output=true, iterative_mode=true, fit_EFACs_EQUADs=true)
+    keys = BasicTempoKeys(silent=true, print_output=true, iterative_mode=true, fit_EFACs_EQUADs=false)
     )
 
-parsed_output, output, stderr_output = run_tempo_basic(basic_settings)
-plot_fit_results(parsed_output)
+results_basic = run_tempo_basic(basic_settings)
+#plot_fit_results(parsed_output)
 
-global_iter_settings = GlobalIterationsSettings(
+global_iters_settings = GlobalIterationsSettings(
     iters = 3,
-    nits = [3,3,3],
+    nits = [4,4,5],
+    gain = [1.0, 1.0, 0.1],
     tparams_local = [
         [TP("MTOT", flag=0), TP("M2", 1.0, flag=0)],
         [TP("MTOT", flag=1), TP("M2", 1.0, flag=0)],
@@ -66,13 +67,16 @@ global_iter_settings = GlobalIterationsSettings(
         ]
     )
 
-parsed_output = run_tempo_global_iters(basic_settings, global_iter_settings)
+parsed_output = run_tempo_global_iters(basic_settings, global_iters_settings)
 plot_fit_results(parsed_output)
 
 parameter_sweep_settings = ParameterSweepSettings(
-    "XPBDOT",
-    [-1e-14, 0.0, 1e-14]
+    parameter_name = "XPBDOT",
+    values = [-2e-14, -1e-14, 0.0, 1e-14, 2e-14]
 )
+
+sweep_results = run_tempo_parameter_sweep(basic_settings, global_iter_settings, parameter_sweep_settings)
+
 
 general_settings = NewGeneralTempoSettings(basic_settings, global_iter_settings, parameter_sweep_settings)
 
@@ -107,6 +111,8 @@ ref_sets = RefinementSettings(
 #    ContourUnit(:val1, contours = [0.5])
 #    DiffContourUnit(:val1, diff = 0.05, contours = [0.5])
     )
+
+
 
 tf = GeneralTempoFramework(tsets, test_params, ref_sets)
 

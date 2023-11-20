@@ -80,7 +80,7 @@ function run_tempo_global_iters(bsets::BasicTempoSettings, gisets::GlobalIterati
         end
 
         # Запуск tempo с текущими настройками итерации
-        parsed_output, output, stderr_output = run_tempo_basic(iter_bsets)
+        results_basic = run_tempo_basic(iter_bsets)
 
         # Проверка наличия ошибок и неправильных результатов TODO:stderr_output
         if bsets.keys.iterative_mode
