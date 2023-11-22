@@ -52,8 +52,23 @@ basic_settings = BasicTempoSettings(
     tparams = [TP("EOS", "BSk22"), TP("COMP_TYPE", "WD"), TP("ALPHA0", 0.0), TP("BETA0", 0.0), TP("NITS", 3)],
     keys = BasicTempoKeys(silent=true, print_output=true, iterative_mode=true, fit_EFACs_EQUADs=false)
     )
+bsets = basic_settings
+
 
 results_basic = run_tempo_basic(basic_settings)
+lii = results_basic.last_internal_iteration
+result = results_basic.last_internal_iteration.result
+
+result.fit_parameters 
+result.chisqr
+result.pre_post
+result.XPBDOT
+
+aii = results_basic.all_internal_iterations
+
+extract_internal_iterations_values(results_basic, :MTOT, :post_fit)
+extract_internal_iterations_values(results_basic, :chisqr, :post_fit)
+
 #plot_fit_results(parsed_output)
 
 global_iters_settings = GlobalIterationsSettings(

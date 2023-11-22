@@ -45,8 +45,8 @@ function run_tempo_basic(bsets::BasicTempoSettings)
     end
     
     # parsed_output = parse_tempo_output(output, bsets.version)
-
-    detailed_results, error_result = parse_all_interations_tempo_output(output, typeof(bsets.version))
+    # detailed_results, error_result = parse_all_internal_interations_tempo_output(output, typeof(bsets.version))
+    all_internal_iterations = parse_all_internal_interations_tempo_output(output, typeof(bsets.version))
 
     # Если нужно, печатаем вывод в файл
     if bsets.keys.print_output
@@ -66,18 +66,19 @@ function run_tempo_basic(bsets::BasicTempoSettings)
         par_file_upd = format_and_validate_par_file(upd_par_path, output, bsets)
     end
 
-    calculated_results = CalculatedResults(0.0)
-    error_output = TempoRunErrorOutput(stderr_output)
+    general_tempo_result = GeneralTempoResult(par_file_upd, all_internal_iterations)
+    return general_tempo_result
 
-    full_results = SingleTempoRunResult(
-        detailed_results[end],
-        calculated_results,
-        error_output,
-        par_file_upd,
-        detailed_results
-    )
-
-    return full_results
+    # calculated_results = CalculatedResults(0.0)
+    # error_output = TempoRunErrorOutput(stderr_output)
+    # full_results = SingleTempoRunResult(
+    #     detailed_results[end],
+    #     calculated_results,
+    #     error_output,
+    #     par_file_upd,
+    #     detailed_results
+    # )
+    # return full_results
 end
 
 

@@ -16,6 +16,8 @@ struct BasicTempoOutputResult <: AbstractTempoResult
     chisqr_nfree::Float64
 end
 
+BasicTempoOutputResult() = BasicTempoOutputResult(NaN, NaN, 0, 0, NaN, 0, (NaN, NaN), NaN, NaN, NaN, NaN)
+
 function Base.show(io::IO, result::BasicTempoOutputResult)
     indent = get(io, :indent, 0)
     println(io, ' '^indent, "Basic Tempo Output Result:")
@@ -77,6 +79,45 @@ struct DetailedTempoOutputResult <: AbstractTempoResult
     end
 end
 
+DetailedTempoOutputResult() = DetailedTempoOutputResult(BasicTempoOutputResult(), FitParameter[])
+
+function Base.getproperty(dtr::DetailedTempoOutputResult, prop::Symbol)
+    if prop == :basic
+        return Base.getfield(dtr, :basic)
+    elseif prop == :fit_parameters
+        return Base.getfield(dtr, :fit_parameters)
+    elseif prop == :fit_parameters_order
+        return Base.getfield(dtr, :fit_parameters_order)
+    elseif prop in fieldnames(BasicTempoOutputResult)
+        return Base.getfield(dtr.basic, prop)
+    elseif haskey(dtr.fit_parameters_order, prop)
+        index = dtr.fit_parameters_order[prop]
+        return dtr.fit_parameters[index]
+    else
+        error("Property $prop not found in DetailedTempoOutputResult.")
+    end
+end
+
+# # Определим staticschema для DetailedTempoOutputResult
+# StructArrays.staticschema(::Type{DetailedTempoOutputResult}) = NamedTuple{
+#     (:basic, :fit_parameters, :fit_parameters_order, fieldnames(BasicTempoOutputResult)...),
+#     Tuple{[fieldtype(DetailedTempoOutputResult, f) for f in fieldnames(DetailedTempoOutputResult)]..., 
+#     [fieldtype(fieldtype(DetailedTempoOutputResult, :basic), a) for a in fieldnames(BasicTempoOutputResult)]...}
+# }
+
+# # Определим component для доступа к подполям basic и к полям fit_parameters
+# function StructArrays.component(s::DetailedTempoOutputResult, key::Symbol)
+#     if key in fieldnames(BasicTempoOutputResult)
+#         return getproperty(getfield(s, :basic), key)
+#     elseif haskey(s.fit_parameters_order, key)
+#         index = s.fit_parameters_order[key]
+#         return s.fit_parameters[index]
+#     else
+#         return getfield(s, key)
+#     end
+# end
+
+
 function Base.show(io::IO, detailed::DetailedTempoOutputResult)
     indent = get(io, :indent, 0)
     println(io, ' '^indent, "Detailed Tempo Output Result:")
@@ -101,49 +142,90 @@ end
 
 # Конструктор с ключевыми словами и значениями по умолчанию
 TempoOutputError(; 
-    error_message::String = "", 
+    error_message::String = "",  
     error_details::String = "", 
     error_type::Symbol = :unknown_error
 ) = TempoOutputError(iteration_number, error_message, error_details, error_type)
 
 
+# Результат одной итерации
+struct InternalIterationTempoResult
+    result::DetailedTempoOutputResult
+    error::TempoOutputError
+end
+
+
+
+
+# Общий результат, включая все итерации
+struct GeneralTempoResult
+    last_internal_iteration::InternalIterationTempoResult
+    final_par_file::TempoParFile
+    all_internal_iterations::Union{StructArray{InternalIterationTempoResult}, Nothing}
+    all_global_iterations::Union{StructArray{GeneralTempoResult}, Nothing}
+
+    # Конструктор для последней внутренней итерации
+    GeneralTempoResult(last_internal_iteration::InternalIterationTempoResult, final_par_file::TempoParFile) = new(last_internal_iteration, final_par_file, nothing, nothing)
+
+    # Конструктор для всех внутренних итераций
+    GeneralTempoResult(final_par_file::TempoParFile, all_internal_iterations::Vector{InternalIterationTempoResult}) = new(all_internal_iterations[end], final_par_file, StructArray(all_internal_iterations), nothing)
+
+    # Конструктор для всех глобальных итераций
+    GeneralTempoResult(all_global_iterations::Vector{GeneralTempoResult}) = new(all_global_iterations[end].last_internal_iteration, all_global_iterations[end].final_par_file, nothing, StructArray(all_global_iterations))
+end
+
+function extract_internal_iterations_values(all_iterations::StructArray{InternalIterationTempoResult}, param_name::Symbol, field_name::Symbol = :post_fit)
+    # Проверка, существует ли поле в basic
+    if param_name in fieldnames(BasicTempoOutputResult)
+        return [itr.result === nothing ? NaN : getfield(itr.result.basic, param_name) for itr in all_iterations]
+    end
+
+    # Проверка, является ли параметр одним из фитируемых параметров
+    if any(itr.result !== nothing && haskey(itr.result.fit_parameters_order, param_name) for itr in all_iterations)
+        return [itr.result === nothing ? NaN : getfield(itr.result.fit_parameters[itr.result.fit_parameters_order[param_name]], field_name) for itr in all_iterations]
+    end
+
+    # Если параметр не найден ни в basic, ни среди фитируемых параметров
+    error("Parameter $param_name not found in basic or fit_parameters")
+end
+
+extract_internal_iterations_values(result::GeneralTempoResult, param_name::Symbol, field_name::Symbol = :post_fit) = extract_internal_iterations_values(result.all_internal_iterations, param_name, field_name)
+
+
 #--------------------------------------------------------------------------------------------------------------
 
-function parse_all_interations_tempo_output(output::String, ::Type{Tempo2})::Tuple{Vector{DetailedTempoOutputResult}, Vector{TempoOutputError, Nothing}}
+function parse_all_internal_interations_tempo_output(output::String, ::Type{Tempo2})::Vector{InternalIterationTempoResult}
     # Разделение на блоки итераций
-    sections = String.(split(output, "[tempo2.C:565] Complete fit")[2:end])  # Пропускаем первую секцию
+    sections = split(output, "[tempo2.C:565] Complete fit")[2:end]  # Пропускаем первую секцию
 
-    detailed_results = Vector{DetailedTempoOutputResult}()
-    error_result = nothing
+    all_internal_interations = Vector{InternalIterationTempoResult}()
 
     for (niter, section) in enumerate(sections)
-
-        detailed_result, error_in_section = parse_single_interation_tempo_output(section, niter, Tempo2)
+        section = String(section)
+        internal_iteration_result = parse_internal_interation_tempo_output(section, Tempo2)
 
         # Проверка на наличие ошибок в секции
 
-        if error_in_section !== nothing
-            error_in_section.iteration_number = niter
-            error_result = error_in_section
+        if internal_iteration_result.error !== TempoOutputError()
             break
         end
 
         # Если ошибок нет, парсим результаты итерации
 
-        push!(detailed_results, detailed_result)
+        push!(all_internal_interations, internal_iteration_result)
     end
 
-    return detailed_results, error_result
+    return all_internal_interations
 end
 
 
-function parse_single_interation_tempo_output(section::String, niter::Int64, ::Type{Tempo2})::Tuple{DetailedTempoOutputResult, Union{TempoOutputError, Nothing}}
+function parse_internal_interation_tempo_output(section::String, ::Type{Tempo2})::InternalIterationTempoResult
     # Парсинг ошибок
-    error = parse_tempo_output_errors(section, niter, Tempo2)
+    error = parse_tempo_output_error(section, Tempo2)
 
     # Если обнаружена ошибка, возвращаем пустой DetailedTempoOutputResult и информацию об ошибке
-    if error !== nothing
-        return DetailedTempoOutputResult(), error
+    if error !== TempoOutputError()
+        return InternalIterationTempoResult(DetailedTempoOutputResult(), error)
     end
 
     # Получение BasicTempoOutputResult
@@ -155,7 +237,7 @@ function parse_single_interation_tempo_output(section::String, niter::Int64, ::T
     # Создание DetailedTempoOutputResult
     detailed_result = DetailedTempoOutputResult(basic_result, fit_parameters)
 
-    return detailed_result, nothing
+    return InternalIterationTempoResult(detailed_result, error)
 end
 
 
@@ -223,7 +305,7 @@ function parse_fit_parameters(section::String, ::Type{Tempo2})::Vector{FitParame
 end
 
 
-function parse_tempo_output_errors(section::String, niter::Int64, ::Type{Tempo2})::Union{TempoOutputError, Nothing}
+function parse_tempo_output_error(section::String, ::Type{Tempo2})::TempoOutputError
     # Примеры регулярных выражений для различных типов ошибок
     error_patterns = Dict(
         :nan_values => r"NaN",
@@ -236,7 +318,6 @@ function parse_tempo_output_errors(section::String, niter::Int64, ::Type{Tempo2}
         match_result = match(pattern, section)
         if match_result !== nothing
             return TempoOutputError(
-                iteration_number = niter,  # Необходимо определить номер итерации
                 error_message = String(match_result.match),
                 error_details = "",  # Детали ошибки можно извлечь дополнительно
                 error_type = error_type
@@ -244,7 +325,7 @@ function parse_tempo_output_errors(section::String, niter::Int64, ::Type{Tempo2}
         end
     end
 
-    return nothing
+    return TempoOutputError()
 end
 
 #--------------------------------------------------------------------------------------------------------------
