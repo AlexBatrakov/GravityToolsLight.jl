@@ -39,14 +39,14 @@ export GeneralTempoParameter, TP, extract_GeneralTempoParameter, get_par_file_re
 include("GeneralTempoFramework/Essentials/TempoParFile.jl")
 export TempoParFile, read_par_file!, write_par_file, update_par_file, update_par_file, modify_tparam!, extend_par_file!, generate_par_file_path
 include("GeneralTempoFramework/Essentials/TempoOutputResults.jl")
-export AbstractTempoResult, BasicTempoOutputResult, FitParameter, DetailedTempoOutputResult, TempoOutputError, InternalIterationTempoResult, extract_internal_iterations_values
+export AbstractTempoResult, BasicTempoOutputResult, FitParameter, DetailedTempoOutputResult, TempoOutputError, InternalIterationTempoResult, extract_internal_iterations_values, GeneralTempoResult
 export CalculatedResults, TempoRunErrorOutput, SingleTempoRunResult
 
 # Включение и экспорт из Settings
 include("GeneralTempoFramework/Settings/BasicTempoSettings.jl")
 export BasicTempoSettings, BasicTempoKeys
 include("GeneralTempoFramework/Settings/GlobalItersSettings.jl")
-export GlobalIterationsSettings
+export GlobalIterationsSettings, GlobalIterationsKeys
 include("GeneralTempoFramework/Settings/ParameterSweepSettings.jl")
 export ParameterSweepSettings
 include("GeneralTempoFramework/Settings/GeneralSettings.jl")

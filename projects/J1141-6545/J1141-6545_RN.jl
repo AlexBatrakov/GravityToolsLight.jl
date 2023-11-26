@@ -50,7 +50,7 @@ basic_settings = BasicTempoSettings(
     tim_file = "J1141-6545_full.tim",
     flags = "-nobs 34000 -newpar -writeres -residuals",
     tparams = [TP("EOS", "BSk22"), TP("COMP_TYPE", "WD"), TP("ALPHA0", 0.0), TP("BETA0", 0.0), TP("NITS", 3)],
-    keys = BasicTempoKeys(silent=true, print_output=true, iterative_mode=true, fit_EFACs_EQUADs=false)
+    keys = BasicTempoKeys(silent=true, print_output=true, save_internal_iterations=true, fit_EFACs_EQUADs=false)
     )
 bsets = basic_settings
 
@@ -72,17 +72,23 @@ extract_internal_iterations_values(results_basic, :chisqr, :post_fit)
 #plot_fit_results(parsed_output)
 
 global_iters_settings = GlobalIterationsSettings(
+    keys = GlobalIterationsKeys(iterative_mode=true, save_global_iterations=true),
     iters = 3,
-    nits = [4,4,5],
+    nits = [2,2,2],
     gain = [1.0, 1.0, 0.1],
     tparams_local = [
         [TP("MTOT", flag=0), TP("M2", 1.0, flag=0)],
         [TP("MTOT", flag=1), TP("M2", 1.0, flag=0)],
-        [TP("M2", flag=1)]
+        [TP("MTOT", flag=1), TP("M2", flag=1)]
         ]
     )
+gisets = global_iters_settings
 
-parsed_output = run_tempo_global_iters(basic_settings, global_iters_settings)
+results_global_iters = run_tempo_global_iters(basic_settings, global_iters_settings)
+
+extract_internal_iterations_values(results_global_iters, :MTOT, :post_fit)
+extract_internal_iterations_values(results_global_iters, :M2, :post_fit)
+extract_internal_iterations_values(results_global_iters, :chisqr)
 plot_fit_results(parsed_output)
 
 parameter_sweep_settings = ParameterSweepSettings(
@@ -90,7 +96,7 @@ parameter_sweep_settings = ParameterSweepSettings(
     values = [-2e-14, -1e-14, 0.0, 1e-14, 2e-14]
 )
 
-sweep_results = run_tempo_parameter_sweep(basic_settings, global_iter_settings, parameter_sweep_settings)
+sweep_results = run_tempo_parameter_sweep(basic_settings, global_iters_settings, parameter_sweep_settings)
 
 
 general_settings = NewGeneralTempoSettings(basic_settings, global_iter_settings, parameter_sweep_settings)

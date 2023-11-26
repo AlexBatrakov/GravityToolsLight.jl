@@ -1,6 +1,8 @@
+
+
 function run_tempo_global_iters(bsets::BasicTempoSettings, gisets::GlobalIterationsSettings)
     # Список для хранения результатов каждой итерации
-    results = []
+    results_global = Vector{GeneralTempoResult}()
 
     # Удаление старых промежуточных .par файлов перед началом всех итераций
     for iter_file in readdir(bsets.work_dir)
@@ -23,7 +25,7 @@ function run_tempo_global_iters(bsets::BasicTempoSettings, gisets::GlobalIterati
 
     # Перебор каждой итерации
     for iter in 1:gisets.iters
-        println("Итерация №$iter")
+        println("Global iteration №$iter")
         
         # Обновление и применение настроек для текущей итерации
         current_flags = bsets.flags
@@ -35,11 +37,9 @@ function run_tempo_global_iters(bsets::BasicTempoSettings, gisets::GlobalIterati
         current_flags *= current_gain != 1.0 ? " -set GAIN $current_gain" : ""
 
         # Создание и обновление объекта настроек для итерации
-    #    iter_bsets = deepcopy(bsets)
-
         current_par_file = joinpath(bsets.work_dir, base_par_name * "_iter$(iter)" * ext)
 
-        if bsets.keys.iterative_mode
+        if gisets.keys.iterative_mode
             # Если включен режим итераций, обновите iter_bsets для использования результатов предыдущей итерации
             cp(joinpath(bsets.work_dir, previous_par_file), current_par_file, force=true)
         else
@@ -58,8 +58,6 @@ function run_tempo_global_iters(bsets::BasicTempoSettings, gisets::GlobalIterati
         bsets.keys,
         bsets.tparams
         )
-
-#        iter_bsets.flags = current_flags
 
         # Обновляем локальные параметры для итерации, если они есть
         local_tparams = iter <= length(gisets.tparams_local) ? gisets.tparams_local[iter] : []
@@ -81,12 +79,14 @@ function run_tempo_global_iters(bsets::BasicTempoSettings, gisets::GlobalIterati
 
         # Запуск tempo с текущими настройками итерации
         results_basic = run_tempo_basic(iter_bsets)
+        push!(results_global, results_basic)
+
 
         # Проверка наличия ошибок и неправильных результатов TODO:stderr_output
-        if bsets.keys.iterative_mode
+        if gisets.keys.iterative_mode
             # Сразу проверяем наличие ошибок в stderr_output и output
-            if contains(stderr_output, "Ошибка") || contains(output, "NaN") || contains(output, "ERROR")
-                println("Обнаружена ошибка в выводе. Остановка итераций.")
+            if results_basic.last_internal_iteration.error !== TempoOutputError()
+                println("Обнаружена ошибка. Остановка итераций.")
                 break
             end
         
@@ -101,16 +101,20 @@ function run_tempo_global_iters(bsets::BasicTempoSettings, gisets::GlobalIterati
 
         # Форматирование и проверка файла .par после итерации
 
-        formatted_par_file = format_and_validate_par_file(current_par_file, output, bsets)
+        # formatted_par_file = format_and_validate_par_file(current_par_file, output, bsets)
 
         # Обновление ссылки на файл для следующей итерации и сохранение результатов
-        if bsets.keys.iterative_mode
+        if gisets.keys.iterative_mode
             # Только в режиме итераций обновляем previous_par_file
             previous_par_file = current_par_file
         end
-        append!(results, parsed_output)
-        println(parsed_output)
+        
     end
 
-    return results
+    if gisets.keys.save_global_iterations
+
+    else
+    
+    end
+    return GeneralTempoResult(results_global)
 end

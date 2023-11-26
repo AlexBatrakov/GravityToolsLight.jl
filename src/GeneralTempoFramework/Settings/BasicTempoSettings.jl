@@ -18,9 +18,8 @@ struct BasicTempoKeys
     silent::Bool
     print_output::Bool
     save_internal_iterations::Bool
-    iterative_mode::Bool
     fit_EFACs_EQUADs::Bool
-    BasicTempoKeys(;silent = true, print_output = false, save_internal_iterations=false, iterative_mode=true, fit_EFACs_EQUADs::Bool = false) = new(silent, print_output, save_internal_iterations, iterative_mode, fit_EFACs_EQUADs)
+    BasicTempoKeys(;silent = true, print_output = false, save_internal_iterations=false, fit_EFACs_EQUADs::Bool = false) = new(silent, print_output, save_internal_iterations, fit_EFACs_EQUADs)
 end
 
 # Implementation of the show method for BasicTempoKeys

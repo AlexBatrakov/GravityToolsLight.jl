@@ -54,7 +54,7 @@ function run_tempo_parameter_sweep(
         )
 
         # Запускаем Tempo с обновленными базовыми настройками и текущими глобальными итерациями
-        parsed_output, output, stderr_output = run_tempo_global_iters(updated_basic_settings, global_iter_settings)
+        results_global_iters = run_tempo_global_iters(updated_basic_settings, global_iter_settings)
 
         # Сохраняем результаты
         sweep_results[value] = parsed_output

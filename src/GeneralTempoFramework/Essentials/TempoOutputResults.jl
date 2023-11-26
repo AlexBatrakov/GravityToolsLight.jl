@@ -140,13 +140,20 @@ struct TempoOutputError
     TempoOutputError(error_message::String, error_details::String, error_type::Symbol) = new(error_message, error_details, error_type)
 end
 
+
 # Конструктор с ключевыми словами и значениями по умолчанию
 TempoOutputError(; 
     error_message::String = "",  
     error_details::String = "", 
     error_type::Symbol = :unknown_error
-) = TempoOutputError(iteration_number, error_message, error_details, error_type)
+) = TempoOutputError(error_message, error_details, error_type)
 
+function Base.show(io::IO, error::TempoOutputError)
+    indent = get(io, :indent, 0)
+    println(io, ' '^indent, "Tempo Output Error:")
+    println(io, ' '^(indent+4), "Error message: ", error.error_message)
+    println(io, ' '^(indent+4), "Error type: ", error.error_type)
+end
 
 # Результат одной итерации
 struct InternalIterationTempoResult
@@ -154,7 +161,14 @@ struct InternalIterationTempoResult
     error::TempoOutputError
 end
 
+function Base.show(io::IO, int_iter::InternalIterationTempoResult)
+    indent = get(io, :indent, 0)
+    println(io, ' '^indent, "Internal iteration:")
+    show(IOContext(io, :indent => indent+4), int_iter.result)
+    show(IOContext(io, :indent => indent+4), int_iter.error)
+end
 
+InternalIterationTempoResult() = InternalIterationTempoResult(DetailedTempoOutputResult(), TempoOutputError())
 
 
 # Общий результат, включая все итерации
@@ -168,21 +182,42 @@ struct GeneralTempoResult
     GeneralTempoResult(last_internal_iteration::InternalIterationTempoResult, final_par_file::TempoParFile) = new(last_internal_iteration, final_par_file, nothing, nothing)
 
     # Конструктор для всех внутренних итераций
-    GeneralTempoResult(final_par_file::TempoParFile, all_internal_iterations::Vector{InternalIterationTempoResult}) = new(all_internal_iterations[end], final_par_file, StructArray(all_internal_iterations), nothing)
+    function GeneralTempoResult(final_par_file::TempoParFile, all_internal_iterations::Vector{InternalIterationTempoResult})
+        last_internal_iteration = isempty(all_internal_iterations) ? InternalIterationTempoResult() : all_internal_iterations[end]
+        all_internal_iterations = isempty(all_internal_iterations) ? StructArray(InternalIterationTempoResult[]) : StructArray(all_internal_iterations)
 
+        return new(last_internal_iteration, final_par_file, all_internal_iterations, nothing)
+    end
+    
     # Конструктор для всех глобальных итераций
-    GeneralTempoResult(all_global_iterations::Vector{GeneralTempoResult}) = new(all_global_iterations[end].last_internal_iteration, all_global_iterations[end].final_par_file, nothing, StructArray(all_global_iterations))
+    function GeneralTempoResult(all_global_iterations::Vector{GeneralTempoResult})
+        last_internal_iteration = all_global_iterations[end].last_internal_iteration
+        final_par_file = all_global_iterations[end].final_par_file
+        all_internal_iterations = vcat([all_global_iterations[i].all_internal_iterations for i in 1:length(all_global_iterations)]...)
+
+        return new(last_internal_iteration, final_par_file, all_internal_iterations, StructArray(all_global_iterations))
+    end
+end
+
+function Base.show(io::IO, tempo_result::GeneralTempoResult)
+    indent = get(io, :indent, 0)
+    println(io, ' '^indent, "General Tempo Result:")
+    show(IOContext(io, :indent => indent+4), tempo_result.last_internal_iteration)
+    println(io, ' '^(indent+4), "Number of saved internal iterations: ", length(tempo_result.all_internal_iterations))
+    println(io, ' '^(indent+4), "Number of saved global iterations: ", length(tempo_result.all_global_iterations))
+    # Здесь показываем поля структуры SingleTempoRunResult с соответствующими отступами
 end
 
 function extract_internal_iterations_values(all_iterations::StructArray{InternalIterationTempoResult}, param_name::Symbol, field_name::Symbol = :post_fit)
     # Проверка, существует ли поле в basic
     if param_name in fieldnames(BasicTempoOutputResult)
-        return [itr.result === nothing ? NaN : getfield(itr.result.basic, param_name) for itr in all_iterations]
+        return [getfield(itr.result.basic, param_name) for itr in all_iterations]
     end
 
+
     # Проверка, является ли параметр одним из фитируемых параметров
-    if any(itr.result !== nothing && haskey(itr.result.fit_parameters_order, param_name) for itr in all_iterations)
-        return [itr.result === nothing ? NaN : getfield(itr.result.fit_parameters[itr.result.fit_parameters_order[param_name]], field_name) for itr in all_iterations]
+    if any(haskey(itr.result.fit_parameters_order, param_name) for itr in all_iterations)
+        return [isempty(itr.result.fit_parameters)  ? NaN : getfield(itr.result.fit_parameters[itr.result.fit_parameters_order[param_name]], field_name) for itr in all_iterations]
     end
 
     # Если параметр не найден ни в basic, ни среди фитируемых параметров
@@ -206,9 +241,9 @@ function parse_all_internal_interations_tempo_output(output::String, ::Type{Temp
 
         # Проверка на наличие ошибок в секции
 
-        if internal_iteration_result.error !== TempoOutputError()
-            break
-        end
+        # if internal_iteration_result.error !== TempoOutputError()
+        #     break
+        # end
 
         # Если ошибок нет, парсим результаты итерации
 
