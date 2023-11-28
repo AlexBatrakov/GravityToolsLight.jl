@@ -203,8 +203,8 @@ function Base.show(io::IO, tempo_result::GeneralTempoResult)
     indent = get(io, :indent, 0)
     println(io, ' '^indent, "General Tempo Result:")
     show(IOContext(io, :indent => indent+4), tempo_result.last_internal_iteration)
-    println(io, ' '^(indent+4), "Number of saved internal iterations: ", length(tempo_result.all_internal_iterations))
-    println(io, ' '^(indent+4), "Number of saved global iterations: ", length(tempo_result.all_global_iterations))
+    println(io, ' '^(indent+4), "Number of saved internal iterations: ", isnothing(tempo_result.all_internal_iterations) ? 0 : length(tempo_result.all_internal_iterations))
+    println(io, ' '^(indent+4), "Number of saved global iterations: ",   isnothing(tempo_result.all_global_iterations)   ? 0 : length(tempo_result.all_global_iterations))
     # Здесь показываем поля структуры SingleTempoRunResult с соответствующими отступами
 end
 

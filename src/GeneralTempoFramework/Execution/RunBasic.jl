@@ -103,11 +103,9 @@ function format_and_validate_par_file(par_file_path::String, output::String, bse
     # Форматирование файла и добавление/обновление параметров EFAC и EQUAD, если это требуется
     if bsets.keys.fit_EFACs_EQUADs
         # Расчёт новых значений EFAC и EQUAD
-        efacs_equads_params = calculate_EFACs_EQUADs(output, bsets)
+        EFACs, EQUADs, log10EQUADs = calculate_EFACs_EQUADs(bsets)
         # Добавление/обновление EFAC и EQUAD в файле .par
-        for efac_equad_param in efacs_equads_params
-            extend_par_file!(par_file, efac_equad_param)
-        end
+        update_EFACs_EQUADs_in_par_file!(par_file, EFACs, log10EQUADs)
     end
 
     # Сохранение отформатированного файла

@@ -1,12 +1,15 @@
-using Revise
-using PyPlot
 using Contour
 using JLD
 using ColorSchemes
 using Statistics
 using DelimitedFiles
 using Distributions
-#pygui(true)
+using StructArrays
+using StatsBase
+using Interpolations
+using QuadGK
+using Optim
+using Roots
 
 using Revise
 using GravityToolsLight
@@ -151,3 +154,86 @@ extend_par_file!(par_file, tparam)
 write_par_file(par_file, "test.par")
 
 #-------------------------------------------------------------------------------------
+
+
+basic_settings = BasicTempoSettings(
+    work_dir = "/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/full_WN",
+    version = Tempo2(),
+    par_file_init = "J1141-6545_full_DDSTG_best2_WN.par",
+#     par_file_init = "J1141-6545_until_2018_DDSTG_best.par",
+    tim_file = "J1141-6545_full_WN.tim",
+#     tim_file  = "J1141-6545_until_2018.tim",
+    flags = "-nobs 34000 -newpar -writeres -residuals",
+    tparams = [TP("EOS", "BSk22"), TP("COMP_TYPE", "WD"), TP("ALPHA0", 0.0), TP("BETA0", 0.0), TP("NITS", 3)],
+    keys = BasicTempoKeys(silent=true, print_output=true, save_internal_iterations=true, fit_EFACs_EQUADs=false)
+    )
+bsets = basic_settings
+
+# results_basic = run_tempo_basic(basic_settings)
+
+parameter_sweep_settings = ParameterSweepSettings(
+    parameter_name = "XPBDOT",
+#    values = collect(-1.5e-14:1e-15:1.5e-14)
+    values = collect(-1.16e-14:2.0e-16:1.82e-14)
+    #values = [-1e-14, 0, 1e-14]
+)
+
+results_sweep = run_tempo_parameter_sweep(basic_settings, parameter_sweep_settings)
+
+save("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/full_WN/results_sweep.jld",  "results_sweep", results_sweep)
+results_sweep = load("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/full_WN/results_sweep.jld", "results_sweep")
+
+chisqr_arr = [results_sweep[iter].last_internal_iteration.result.chisqr for iter in 1:length(parameter_sweep_settings.values)]
+pdf_arr = exp.(-0.5*(chisqr_arr .- minimum(filter(x -> !isnan(x), chisqr_arr))))
+pdf_arr ./= sum(pdf_arr)
+plot(parameter_sweep_settings.values, pdf_arr)
+
+
+xpbdot = vec(readdlm("/Users/abatrakov/Documents/Work/PhD/projects/J1141-6545/original_data/J1141-6545_PbdotExt-Tot.dat"))
+histogram = fit(Histogram, xpbdot, nbins=200)
+pdf_values = histogram.weights / sum(histogram.weights)
+bin_edges = histogram.edges[1]
+plot(bin_edges[1:end-1], pdf_values)
+
+pdf_mul = pdf_arr .* pdf_values 
+pdf_mul ./= sum(pdf_mul)
+plot(bin_edges[1:end-1], pdf_mul)
+
+#axvline(x=-4.33365376107607e-15)
+#axvline(x=-4.33365376107607e-15+2.6574e-15, color="red")
+#axvline(x=-4.33365376107607e-15-2.6574e-15, color="red")
+
+xpbdot_ticks = collect(bin_edges[1:end-1])
+pdf_mul_function = interpolate((xpbdot_ticks,), pdf_mul, Gridded(Linear()))
+pdf_prior_function = interpolate((xpbdot_ticks,), pdf_values, Gridded(Linear()))
+
+cdf = cumsum(pdf_mul) / sum(pdf_mul)
+
+# Разделение CDF на равные части
+n_points = 6
+targets = [(i/n_points) * cdf[end] for i in 1:n_points-1]
+
+# Вычисление центров сегментов
+selected_points = []
+for i in 1:length(targets)-1
+    left_idx = findfirst(x -> x >= targets[i], cdf)
+    right_idx = findfirst(x -> x >= targets[i+1], cdf)
+    center_point = (xpbdot_ticks[left_idx] + xpbdot_ticks[right_idx]) / 2
+    push!(selected_points, center_point)
+end
+
+selected_points # содержит выбранные точки для интегрирования
+
+plot(selected_points, pdf_function.(selected_points), "o", color="violet")
+
+
+
+integral_mul, error = quadgk(pdf_mul_function, xpbdot_ticks[1], xpbdot_ticks[end])
+integral_prior, error = quadgk(pdf_prior_function, xpbdot_ticks[1], xpbdot_ticks[end])
+
+integral_mul / integral_prior
+
+
+XDOT_arr = [results_sweep[iter].last_internal_iteration.result.XDOT.post_fit for iter in 1:length(parameter_sweep_settings.values)]
+
+plot(xpbdot_ticks, XDOT_arr)

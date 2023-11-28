@@ -46,22 +46,6 @@ function read_par_file!(par_file::TempoParFile)
     return par_file
 end
 
-function read_par_file(par_file::TempoParFile)
-    par_file.order = Vector{Symbol}()
-    open(par_file.name, "r") do file_in
-        for line in eachline(file_in)
-            if startswith(line, "C ") || startswith(line, "c ")
-                continue
-            end
-            tparam = extract_GeneralTempoParameter(line)
-            par_file.tparams[tparam.name_symbol] = tparam
-            push!(par_file.order, tparam.name_symbol)
-        end
-    end
-    return par_file
-end
-
-
 
 function write_par_file(par_file::TempoParFile, name_out=par_file.name)
     open(name_out, "w") do file_out
@@ -112,3 +96,20 @@ end
 function strip_extension(file_name::String)
     return splitext(file_name)[1]
 end
+
+function detect_backends(tim_file_path::String)
+    backends = Set{String}()  # Используем множество для избежания дубликатов
+    open(tim_file_path, "r") do file
+        for line in eachline(file)
+            if occursin("-be ", line)
+                backend_name = match(r"-be (\S+)", line)
+                if backend_name !== nothing
+                    # Извлекаем только название бэкенда, исключая "-be"
+                    push!(backends, backend_name.captures[1])
+                end
+            end
+        end
+    end
+    return collect(backends)  # Преобразуем множество в вектор
+end
+

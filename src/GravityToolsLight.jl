@@ -6,6 +6,7 @@ using Distributions
 using NLsolve
 using Measurements
 using Optim
+using Roots
 using StructArrays
 using Printf
 using Distributed

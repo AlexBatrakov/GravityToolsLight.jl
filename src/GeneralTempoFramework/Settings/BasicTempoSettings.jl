@@ -54,6 +54,7 @@ struct BasicTempoSettings{T <: AbstractTempoVersion}
     version::T
     par_file_init::String
     tim_file::String
+    backends::Vector{String}
     flags::String
     keys::BasicTempoKeys
     tparams::Vector{GeneralTempoParameter}
@@ -66,6 +67,7 @@ function Base.show(io::IO, bsets::BasicTempoSettings)
     println(io, "   Version: ", bsets.version)
     println(io, "   Initial par file: ", bsets.par_file_init)
     println(io, "   Working tim file: ", bsets.tim_file)
+    println(io, "   Used backends: ", bsets.backends)
     println(io, "   Selected additional flags: ", bsets.flags)
     println(io, "   ", bsets.keys)
     println(io, "   Tempo parameters used:", bsets.tparams)
@@ -78,6 +80,7 @@ BasicTempoSettings(;
     version,
     par_file_init,
     tim_file,
+    backends = String[],
     flags = "",
     keys = BasicTempoKeys(),
     tparams = GeneralTempoParameter[]
@@ -86,6 +89,7 @@ BasicTempoSettings(;
         version,
         par_file_init,
         tim_file,
+        isempty(backends) ? detect_backends(work_dir * "/" * tim_file) : backends,
         flags,
         keys,
         tparams

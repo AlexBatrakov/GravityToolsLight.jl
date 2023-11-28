@@ -138,7 +138,7 @@ end
 
 # Function to get a formatted representation of a GeneralTempoParameter for a .par file
 function get_par_file_representation(tparam::GeneralTempoParameter)
-    n_name = (tparam.value isa BigFloat && tparam.value < 0) ? 19 : 20
+    n_name = (tparam.value isa BigFloat && tparam.value < 0) ? 22 : 23
     n_value = (tparam.value isa BigFloat && tparam.value < 0) ? 30 : 29
     n_flag = 6
     n_uncertainty = 29

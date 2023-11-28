@@ -29,10 +29,11 @@ end
 
 function run_tempo_parameter_sweep(
     basic_settings::BasicTempoSettings,
-    global_iter_settings::GlobalIterationsSettings,
     parameter_sweep_settings::ParameterSweepSettings)
     # Результаты для каждого значения XPBDOT
-    sweep_results = Dict()
+    sweep_results = GeneralTempoResult[]
+
+    println("sweep parameter = $(parameter_sweep_settings.parameter_name)")
 
     # Перебираем значения XPBDOT
     for value in parameter_sweep_settings.values
@@ -41,6 +42,7 @@ function run_tempo_parameter_sweep(
 
         # Обновляем или добавляем параметр в настройки
         updated_tparams = update_or_add_tparam(copy(basic_settings.tparams), sweep_parameter)
+        print("value = $value, ")
 
         # Создаем новые базовые настройки с обновленным значением XPBDOT
         updated_basic_settings = BasicTempoSettings(
@@ -54,10 +56,12 @@ function run_tempo_parameter_sweep(
         )
 
         # Запускаем Tempo с обновленными базовыми настройками и текущими глобальными итерациями
-        results_global_iters = run_tempo_global_iters(updated_basic_settings, global_iter_settings)
+        results_basic = run_tempo_basic(updated_basic_settings)
+        chisqr = (results_basic.last_internal_iteration.result.chisqr)
+        println("chisqr = $(chisqr), ") 
 
         # Сохраняем результаты
-        sweep_results[value] = parsed_output
+        push!(sweep_results, results_basic)
     end
 
     return sweep_results
