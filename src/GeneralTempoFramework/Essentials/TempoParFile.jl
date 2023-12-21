@@ -35,7 +35,7 @@ function read_par_file!(par_file::TempoParFile)
     par_file.order = Vector{Symbol}()
     open(par_file.name, "r") do file_in
         for line in eachline(file_in)
-            if startswith(line, "C ") || startswith(line, "c ")
+            if startswith(line, "C ") || startswith(line, "c ") || startswith(line, " ")
                 continue
             end
             tparam = extract_GeneralTempoParameter(line)

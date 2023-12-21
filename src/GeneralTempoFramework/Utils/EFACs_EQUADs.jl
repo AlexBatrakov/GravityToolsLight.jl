@@ -18,7 +18,7 @@ function calculate_EFACs_EQUADs(settings::BasicTempoSettings)
         indices = [i for i in 1:size(tim_file_data, 1)-2 if backend in tim_file_data[i+2, :]]  
         
         try
-        EFAC, EQUAD, indices_cut = GravityToolsLight.estimate_WhiteNoise(residuals, uncertainties, indices)
+        EFAC, EQUAD = GravityToolsLight.estimate_WhiteNoise_AD(residuals, uncertainties, indices)
         
         EFACs[backend] = EFAC
         EQUADs[backend] = EQUAD
@@ -33,12 +33,53 @@ function calculate_EFACs_EQUADs(settings::BasicTempoSettings)
     return EFACs, EQUADs, log10EQUADs
 end
 
-function estimate_WhiteNoise(residuals, uncertainties, indices)
+transform_uncertainty(unc, EFAC, EQUAD) = sqrt(EFAC^2 * unc^2 + EQUAD^2)
+
+function AD_objective(res, unc, EFAC, EQUAD)
+    res_norm = res ./ transform_uncertainty.(unc, EFAC, EQUAD)
+    ad_test = OneSampleADTest(res_norm, Normal(0, 1))
+    return ad_test.A² # Минимизация p-значения или максимизация, в зависимости от вашей задачи
+end
+
+function estimate_WhiteNoise_AD(residuals, uncertainties, indices)
+    res = residuals[indices]
+    unc = uncertainties[indices]
+
+    objective(EFAC_EQUAD) = AD_objective(res, unc, EFAC_EQUAD[1], EFAC_EQUAD[2])
+
+    AD_result = optimize(objective, [1.0, mean(unc)])
+
+    EFAC, EQUAD = Optim.minimizer(AD_result)
+
+    return EFAC, EQUAD
+end
+
+function KS_objective(res, unc, EFAC, EQUAD)
+    res_norm = res ./ transform_uncertainty.(unc, EFAC, EQUAD)
+    ks_test = ApproximateOneSampleKSTest(res_norm, Normal(0, 1))
+    return sqrt(ks_test.n)*ks_test.δ # Минимизация p-значения или максимизация, в зависимости от вашей задачи
+end
+
+function estimate_WhiteNoise_KS(residuals, uncertainties, indices)
+    res = residuals[indices]
+    unc = uncertainties[indices]
+
+    objective(EFAC_lambda) = KS_objective(res, unc, EFAC_lambda[1], EFAC_lambda[2])
+
+    KS_result = optimize(objective, [1.0, mean(unc)])
+
+    EFAC, lambda = Optim.minimizer(KS_result)
+    EQUAD = lambda * EFAC
+
+    return EFAC, EQUAD
+end
+
+function estimate_WhiteNoise_moments(residuals, uncertainties, indices)
     # Определение функций для оптимизации
     transform_uncertainty(unc, EFAC, EQUAD) = sqrt(EFAC^2 * unc^2 + EQUAD^2)
     kurtosis_function(res, unc, EFAC, EQUAD) = (EFAC == 0 && EQUAD == 0) ? Inf : kurtosis(res ./ transform_uncertainty.(unc, EFAC, EQUAD))
 
-    # Минимизация куртозиса для нахождения lambda
+    # Минимизация куртозиса для нахождения lambda 
     lambda_function(lambda) = kurtosis_function(residuals[indices], uncertainties[indices], 1.0, lambda)
     lambda_opt = optimize(lambda_function, [0.0])
     lambda = max(Optim.minimizer(lambda_opt)[1], 0.0)
@@ -51,7 +92,7 @@ function estimate_WhiteNoise(residuals, uncertainties, indices)
 
     unc_trans = transform_uncertainty.(uncertainties[indices], EFAC, EQUAD)
 
-    hist(residuals[indices] ./ unc_trans)
+    #hist(residuals[indices] ./ unc_trans)
 
     indices_cut = indices
 

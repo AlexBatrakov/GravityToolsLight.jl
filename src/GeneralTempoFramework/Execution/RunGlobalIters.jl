@@ -54,6 +54,7 @@ function run_tempo_global_iters(bsets::BasicTempoSettings, gisets::GlobalIterati
         bsets.version,
         current_par_file,
         bsets.tim_file,
+        bsets.backends,
         current_flags,
         bsets.keys,
         bsets.tparams
@@ -80,6 +81,17 @@ function run_tempo_global_iters(bsets::BasicTempoSettings, gisets::GlobalIterati
         # Запуск tempo с текущими настройками итерации
         results_basic = run_tempo_basic(iter_bsets)
         push!(results_global, results_basic)
+
+
+        tim_file_path = joinpath(bsets.work_dir, bsets.tim_file)
+        tim_file_data = readdlm(tim_file_path, String)
+        uncertainties = parse.(Float64, tim_file_data[3:end, 4])
+        residuals = readdlm(joinpath(bsets.work_dir, "postfit.res"), Float64)[:, 2] .* 1e6
+        rms = sqrt(mean(residuals .^ 2))
+
+        results = results_basic.last_internal_iteration.result
+        println("chisqr = $(results.chisqr), chisqr/nfree = $(results.chisqr_nfree), TRES = $(results.TRES.post_fit), RMS = $rms, Pre/post = $(results.pre_post)")
+
 
 
         # Проверка наличия ошибок и неправильных результатов TODO:stderr_output

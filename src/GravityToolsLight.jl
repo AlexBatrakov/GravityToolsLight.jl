@@ -13,6 +13,7 @@ using Distributed
 using ColorSchemes
 using PyPlot
 using ProgressMeter
+using HypothesisTests
 
 include("Utils.jl")
 export TestParameters

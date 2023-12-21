@@ -62,7 +62,7 @@ function Base.show(io::IO, tparam::GeneralTempoParameter)
 
     # Formatted output for BigFloat values
     if tparam.value isa BigFloat
-        print(io, " ", @sprintf("%.10f", tparam.value))
+        print(io, " ", @sprintf("%.10g", tparam.value))
     else
         print(io, " ", tparam.value)
     end
@@ -74,7 +74,7 @@ function Base.show(io::IO, tparam::GeneralTempoParameter)
     # Formatted output for BigFloat uncertainties
     if tparam.uncertainty !== nothing
         if tparam.uncertainty isa BigFloat
-            print(io, " ±", @sprintf("%.10f", tparam.uncertainty))
+            print(io, " ±", @sprintf("%.10g", tparam.uncertainty))
         else
             print(io, " ±", tparam.uncertainty)
         end

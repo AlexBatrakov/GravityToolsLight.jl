@@ -67,3 +67,48 @@ function run_tempo_parameter_sweep(
     return sweep_results
 end
 
+
+function run_tempo_parameter_sweep(
+    basic_settings::BasicTempoSettings,
+    global_iters_settings::GlobalIterationsSettings,
+    parameter_sweep_settings::ParameterSweepSettings)
+    # Результаты для каждого значения XPBDOT
+    sweep_results = GeneralTempoResult[]
+
+    println("sweep parameter = $(parameter_sweep_settings.parameter_name)")
+
+    # Перебираем значения XPBDOT
+    for value in parameter_sweep_settings.values
+        # Создаем новый параметр для свипа
+        sweep_parameter = GeneralTempoParameter(parameter_sweep_settings.parameter_name, value, flag=0)
+
+        # Обновляем или добавляем параметр в настройки
+        updated_tparams = update_or_add_tparam(copy(basic_settings.tparams), sweep_parameter)
+        println("value = $value ")
+
+        # Создаем новые базовые настройки с обновленным значением XPBDOT
+        updated_basic_settings = BasicTempoSettings(
+            work_dir = basic_settings.work_dir,
+            version = basic_settings.version,
+            par_file_init = basic_settings.par_file_init,
+            tim_file = basic_settings.tim_file,
+            flags = basic_settings.flags,
+            tparams = updated_tparams,
+            keys = basic_settings.keys
+        )
+
+
+
+        # Запускаем Tempo с обновленными базовыми настройками и текущими глобальными итерациями
+        results_global_iters = run_tempo_global_iters(updated_basic_settings, global_iters_settings)
+
+        results = results_global_iters.last_internal_iteration.result
+
+        println("chisqr = $(results.chisqr), chisqr/nfree = $(results.chisqr_nfree), TRES = $(results.TRES.post_fit), Pre/post = $(results.pre_post)")
+
+        # Сохраняем результаты
+        push!(sweep_results, results_global_iters)
+    end
+
+    return sweep_results
+end
