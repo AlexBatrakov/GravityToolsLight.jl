@@ -121,12 +121,12 @@ stress_data.date = mdates.date2num.(stress_data.date)
 
 # Настройка тиков на оси X для второго подграфика (качество сна)
 axs[2].xaxis.set_major_locator(mdates.AutoDateLocator())
-axs[2].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+axs[2].xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
 axs[2].locator_params(axis='x', nbins=5) # Ограничим количество тиков
 
 # Настройка тиков на оси X для третьего подграфика (пульс покоя)
 axs[3].xaxis.set_major_locator(mdates.AutoDateLocator())
-axs[3].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+axs[3].xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
 axs[3].locator_params(axis='x', nbins=5) # Ограничим количество тиков
 
 plt.tight_layout()
