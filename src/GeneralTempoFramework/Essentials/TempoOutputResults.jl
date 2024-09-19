@@ -13,10 +13,11 @@ struct BasicTempoOutputResult <: AbstractTempoResult
     offset_e_sqrt_n::Float64
     pre_post::Float64
     rms_post_fit_residual_us::Float64
+    rms_tn_post_fit_residual_us::Float64
     chisqr_nfree::Float64
 end
 
-BasicTempoOutputResult() = BasicTempoOutputResult(NaN, NaN, 0, 0, NaN, 0, (NaN, NaN), NaN, NaN, NaN, NaN)
+BasicTempoOutputResult() = BasicTempoOutputResult(NaN, NaN, 0, 0, NaN, 0, (NaN, NaN), NaN, NaN, NaN, NaN, NaN)
 
 function Base.show(io::IO, result::BasicTempoOutputResult)
     indent = get(io, :indent, 0)
@@ -31,6 +32,7 @@ function Base.show(io::IO, result::BasicTempoOutputResult)
     println(io, ' '^(indent+4), "Offset E * Sqrt(n): ", result.offset_e_sqrt_n)
     println(io, ' '^(indent+4), "Pre/Post: ", result.pre_post)
     println(io, ' '^(indent+4), "RMS Post-fit Residual (us): ", result.rms_post_fit_residual_us)
+    println(io, ' '^(indent+4), "RMS TN Post-fit Residual (us): ", result.rms_tn_post_fit_residual_us)
     println(io, ' '^(indent+4), "Chisqr/Nfree: ", result.chisqr_nfree)
 end
 
@@ -134,7 +136,7 @@ struct TempoOutputError
     error_type::Symbol  # Например, :nan_values, :convergence_issue, :fit_error, etc.
 
     # Конструктор для пустой ошибки
-    TempoOutputError() = new("", "", :no_error)
+    # TempoOutputError() = new("", "", :no_error)
 
     # Стандартный конструктор
     TempoOutputError(error_message::String, error_details::String, error_type::Symbol) = new(error_message, error_details, error_type)
@@ -280,6 +282,7 @@ function parse_basic_tempo_output(section::String, ::Type{Tempo2})::BasicTempoOu
 
     # Создаем BasicTempoOutputResult для текущей итерации
     rms_regex = r"RMS pre-fit residual = (\d+\.\d+) \(us\), RMS post-fit residual = (\d+\.\d+) \(us\)"
+    rms_tn_regex = r"RMS post-fit residual TN = (\d+\.\d+) \(us\)"
     chisq_regex = r"Fit Chisq = (\d+\.?\d*[eE]?[-+]?\d*)\s+Chisqr/nfree = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?/(\d+) = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?\s+pre/post = (\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)"
     params_regex = r"Number of fit parameters: (\d+)"
     points_regex = r"Number of points in fit = (\d+)"
@@ -287,6 +290,7 @@ function parse_basic_tempo_output(section::String, ::Type{Tempo2})::BasicTempoOu
 
     # Извлекаем значения
     rms_match = match(rms_regex, section)
+    rms_tn_match = match(rms_tn_regex, section)
     chisq_match = match(chisq_regex, section)
     params_match = match(params_regex, section)
     points_match = match(points_regex, section)
@@ -304,6 +308,7 @@ function parse_basic_tempo_output(section::String, ::Type{Tempo2})::BasicTempoOu
         parse(Float64, offset_match[3]), # offset_e_sqrt_n
         parse(Float64, chisq_match[5]),  # pre_post
         parse(Float64, rms_match[2]),    # rms_post_fit_residual_us
+        parse(Float64, rms_tn_match[1]),
         parse(Float64, chisq_match[4])   # chisqr_nfree
     )
 

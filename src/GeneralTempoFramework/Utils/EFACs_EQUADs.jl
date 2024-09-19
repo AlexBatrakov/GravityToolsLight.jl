@@ -18,7 +18,7 @@ function calculate_EFACs_EQUADs(settings::BasicTempoSettings)
         indices = [i for i in 1:size(tim_file_data, 1)-2 if backend in tim_file_data[i+2, :]]  
         
         try
-        EFAC, EQUAD = GravityToolsLight.estimate_WhiteNoise_AD(residuals, uncertainties, indices)
+        EFAC, EQUAD = GravityToolsLight.estimate_WhiteNoise_KS(residuals, uncertainties, indices)
         
         EFACs[backend] = EFAC
         EQUADs[backend] = EQUAD

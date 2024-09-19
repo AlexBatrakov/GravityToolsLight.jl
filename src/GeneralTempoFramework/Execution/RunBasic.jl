@@ -21,7 +21,7 @@ function run_tempo_basic(bsets::BasicTempoSettings)
 
     command = `$(get_tempo_command(bsets.version)) -f $(par_file_init.name) $(bsets.tim_file) $([split(bsets.flags)...])`
 
-        # Инициализация IOBuffer для захвата вывода
+    # Инициализация IOBuffer для захвата вывода
     output_io = IOBuffer()
     stderr_io = IOBuffer()
 
@@ -37,6 +37,7 @@ function run_tempo_basic(bsets::BasicTempoSettings)
 
     # Считать вывод из IOBuffer
     output = String(take!(output_io))
+
     stderr_output = String(take!(stderr_io))
 
     # Сразу проверяем наличие ошибок в stderr_output и output
@@ -115,128 +116,131 @@ function format_and_validate_par_file(par_file_path::String, output::String, bse
     return par_file
 end
 
-# Функция для вызова парсера на основе типа версии
-function parse_tempo_output(output, version::AbstractTempoVersion)
-    parse_tempo_output(output, typeof(version))
-end
+# # Функция для вызова парсера на основе типа версии
+# function parse_tempo_output(output, version::AbstractTempoVersion)
+#     parse_tempo_output(output, typeof(version))
+# end
 
-# Определение функций для разных версий
-function parse_tempo_output(output, ::Type{Tempo})
-    # Реализация парсера для Tempo
-end
+# # Определение функций для разных версий
+# function parse_tempo_output(output, ::Type{Tempo})
+#     # Реализация парсера для Tempo
+# end
 
-function parse_tempo_output(output::String, ::Type{Tempo2})::Vector{BasicTempoOutputResult}
-    # Разделяем выходные данные на секции по итерациям
-    sections = split(output, "Complete fit\n\n\n")
+# function parse_tempo_output(output::String, ::Type{Tempo2})::Vector{BasicTempoOutputResult}
+#     # Разделяем выходные данные на секции по итерациям
+#     sections = split(output, "Complete fit\n\n\n")
     
-    # Убираем первый элемент, если он не содержит данных об итерации
-    if !contains(sections[1], "RMS pre-fit residual")
-        sections = sections[2:end]
-    end
+#     # Убираем первый элемент, если он не содержит данных об итерации
+#     if !contains(sections[1], "RMS pre-fit residual")
+#         sections = sections[2:end]
+#     end
 
-    # Создаем массив для сохранения данных
-    iterations_data = BasicTempoOutputResult[]
+#     # Создаем массив для сохранения данных
+#     iterations_data = BasicTempoOutputResult[]
 
-    for section in sections
-        # Создаем BasicTempoOutputResult для текущей итерации
-        rms_regex = r"RMS pre-fit residual = (\d+\.\d+) \(us\), RMS post-fit residual = (\d+\.\d+) \(us\)"
-        chisq_regex = r"Fit Chisq = (\d+\.?\d*[eE]?[-+]?\d*)\s+Chisqr/nfree = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?/(\d+) = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?\s+pre/post = (\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)"
-        params_regex = r"Number of fit parameters: (\d+)"
-        points_regex = r"Number of points in fit = (\d+)"
-        offset_regex = r"Offset: ([\d\.\-eE]+) ([\d\.\-eE]+) offset_e\*sqrt\(n\) = ([\d\.\-eE]+) n = (\d+)"
+#     for section in sections
+#         # Создаем BasicTempoOutputResult для текущей итерации
+#         rms_regex = r"RMS pre-fit residual = (\d+\.\d+) \(us\), RMS post-fit residual = (\d+\.\d+) \(us\)"
+#         rms_tn_regex = r"RMS post-fit residual TN = (\d+\.\d+) \(us\)"
+#         chisq_regex = r"Fit Chisq = (\d+\.?\d*[eE]?[-+]?\d*)\s+Chisqr/nfree = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?/(\d+) = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?\s+pre/post = (\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)"
+#         params_regex = r"Number of fit parameters: (\d+)"
+#         points_regex = r"Number of points in fit = (\d+)"
+#         offset_regex = r"Offset: ([\d\.\-eE]+) ([\d\.\-eE]+) offset_e\*sqrt\(n\) = ([\d\.\-eE]+) n = (\d+)"
 
-        # Извлекаем значения
-        rms_match = match(rms_regex, section)
-        chisq_match = match(chisq_regex, section)
-        params_match = match(params_regex, section)
-        points_match = match(points_regex, section)
-        offset_match = match(offset_regex, section)
+#         # Извлекаем значения
+#         rms_match = match(rms_regex, section)
+#         rms_tn_match = match(rms_tn_regex, section)
+#         chisq_match = match(chisq_regex, section)
+#         params_match = match(params_regex, section)
+#         points_match = match(points_regex, section)
+#         offset_match = match(offset_regex, section)
 
-        # Создаем объект BasicTempoOutputResult
-        result = BasicTempoOutputResult(
-            parse(Float64, chisq_match[1]),  # fit_chisq
-            parse(Float64, chisq_match[2]),  # chisqr
-            parse(Int, points_match[1]),     # number_of_points_in_fit
-            parse(Int, params_match[1]),     # number_of_fit_parameters
-            parse(Float64, rms_match[1]),    # rms_pre_fit_residual_us
-            parse(Int, chisq_match[3]),      # nfree
-            (parse(Float64, offset_match[1]), parse(Float64, offset_match[2])),  # offset
-            parse(Float64, offset_match[3]), # offset_e_sqrt_n
-            parse(Float64, chisq_match[5]),  # pre_post
-            parse(Float64, rms_match[2]),    # rms_post_fit_residual_us
-            parse(Float64, chisq_match[4])   # chisqr_nfree
-        )
+#         # Создаем объект BasicTempoOutputResult
+#         result = BasicTempoOutputResult(
+#             parse(Float64, chisq_match[1]),  # fit_chisq
+#             parse(Float64, chisq_match[2]),  # chisqr
+#             parse(Int, points_match[1]),     # number_of_points_in_fit
+#             parse(Int, params_match[1]),     # number_of_fit_parameters
+#             parse(Float64, rms_match[1]),    # rms_pre_fit_residual_us
+#             parse(Int, chisq_match[3]),      # nfree
+#             (parse(Float64, offset_match[1]), parse(Float64, offset_match[2])),  # offset
+#             parse(Float64, offset_match[3]), # offset_e_sqrt_n
+#             parse(Float64, chisq_match[5]),  # pre_post
+#             parse(Float64, rms_match[2]),    # rms_post_fit_residual_us
+#             parse(Float64, rms_tn_match[2]),
+#             parse(Float64, chisq_match[4])   # chisqr_nfree
+#         )
 
-        push!(iterations_data, result)
-    end
+#         push!(iterations_data, result)
+#     end
 
-    return iterations_data
-end
+#     return iterations_data
+# end
 
 
-function parse_tempo_output_old(output::String, ::Type{Tempo2})
-    # Разделяем выходные данные на секции по итерациям
-    sections = split(output, "Complete fit\n\n\n")
+# function parse_tempo_output_old(output::String, ::Type{Tempo2})
+#     # Разделяем выходные данные на секции по итерациям
+#     sections = split(output, "Complete fit\n\n\n")
     
-    # Убираем первый элемент, если он не содержит данных об итерации
-    if !contains(sections[1], "RMS pre-fit residual")
-        sections = sections[2:end]
-    end
+#     # Убираем первый элемент, если он не содержит данных об итерации
+#     if !contains(sections[1], "RMS pre-fit residual")
+#         sections = sections[2:end]
+#     end
 
 
-    # Создаем массив словарей для сохранения данных
-    iterations_data = []
+#     # Создаем массив словарей для сохранения данных
+#     iterations_data = []
     
-    for section in sections
-        # Создаем словарь для сохранения данных текущей итерации
-        results = Dict()
+#     for section in sections
+#         # Создаем словарь для сохранения данных текущей итерации
+#         results = Dict()
             
-        # Извлечение информации о RMS pre-fit и post-fit residuals
-        rms_regex = r"RMS pre-fit residual = (\d+\.\d+) \(us\), RMS post-fit residual = (\d+\.\d+) \(us\)"
-        rms_match = match(rms_regex, section)
-        if rms_match !== nothing
-            results["RMS pre-fit residual (us)"] = parse(Float64, rms_match[1])
-            results["RMS post-fit residual (us)"] = parse(Float64, rms_match[2])
-        end
+#         # Извлечение информации о RMS pre-fit и post-fit residuals
+#         rms_regex = r"RMS pre-fit residual = (\d+\.\d+) \(us\), RMS post-fit residual = (\d+\.\d+) \(us\)"
+#         rms_match = match(rms_regex, section)
+#         if rms_match !== nothing
+#             results["RMS pre-fit residual (us)"] = parse(Float64, rms_match[1])
+#             results["RMS post-fit residual (us)"] = parse(Float64, rms_match[2])
+#         end
         
-        # Обновляем регулярное выражение и процедуру извлечения информации о Fit Chisq, Chisqr/nfree и pre/post
-        chisq_regex = r"Fit Chisq = (\d+\.?\d*[eE]?[-+]?\d*)\s+Chisqr/nfree = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?/(\d+) = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?\s+pre/post = (\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)"
-        chisq_match = match(chisq_regex, section)
-        if chisq_match !== nothing
-            results["Fit Chisq"] = parse(Float64, chisq_match[1])
-            results["Chisqr"] = parse(Float64, chisq_match[2])
-            results["nfree"] = parse(Int, chisq_match[3])
-            results["Chisqr/nfree"] = parse(Float64, chisq_match[4])
-            results["pre/post"] = parse(Float64, chisq_match[5])
-        end
+#         # Обновляем регулярное выражение и процедуру извлечения информации о Fit Chisq, Chisqr/nfree и pre/post
+#         chisq_regex = r"Fit Chisq = (\d+\.?\d*[eE]?[-+]?\d*)\s+Chisqr/nfree = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?/(\d+) = (\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?\s+pre/post = (\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)"
+#         chisq_match = match(chisq_regex, section)
+#         if chisq_match !== nothing
+#             results["Fit Chisq"] = parse(Float64, chisq_match[1])
+#             results["Chisqr"] = parse(Float64, chisq_match[2])
+#             results["nfree"] = parse(Int, chisq_match[3])
+#             results["Chisqr/nfree"] = parse(Float64, chisq_match[4])
+#             results["pre/post"] = parse(Float64, chisq_match[5])
+#         end
         
-        # Извлечение информации о количестве параметров подгонки
-        params_regex = r"Number of fit parameters: (\d+)"
-        params_match = match(params_regex, section)
-        if params_match !== nothing
-            results["Number of fit parameters"] = parse(Int, params_match[1])
-        end
+#         # Извлечение информации о количестве параметров подгонки
+#         params_regex = r"Number of fit parameters: (\d+)"
+#         params_match = match(params_regex, section)
+#         if params_match !== nothing
+#             results["Number of fit parameters"] = parse(Int, params_match[1])
+#         end
         
-        # Извлечение информации о количестве точек в подгонке
-        points_regex = r"Number of points in fit = (\d+)"
-        points_match = match(points_regex, section)
-        if points_match !== nothing
-            results["Number of points in fit"] = parse(Int, points_match[1])
-        end
+#         # Извлечение информации о количестве точек в подгонке
+#         points_regex = r"Number of points in fit = (\d+)"
+#         points_match = match(points_regex, section)
+#         if points_match !== nothing
+#             results["Number of points in fit"] = parse(Int, points_match[1])
+#         end
         
-        # Извлечение информации об Offset
-        offset_regex = r"Offset: ([\d\.\-eE]+) ([\d\.\-eE]+) offset_e\*sqrt\(n\) = ([\d\.\-eE]+) n = (\d+)"
-        offset_match = match(offset_regex, section)
-        if offset_match !== nothing
-            results["Offset"] = (parse(Float64, offset_match[1]), parse(Float64, offset_match[2]))
-            results["offset_e*sqrt(n)"] = parse(Float64, offset_match[3])
-            results["n (number of points)"] = parse(Int, offset_match[4])
-        end
+#         # Извлечение информации об Offset
+#         offset_regex = r"Offset: ([\d\.\-eE]+) ([\d\.\-eE]+) offset_e\*sqrt\(n\) = ([\d\.\-eE]+) n = (\d+)"
+#         offset_match = match(offset_regex, section)
+#         if offset_match !== nothing
+#             results["Offset"] = (parse(Float64, offset_match[1]), parse(Float64, offset_match[2]))
+#             results["offset_e*sqrt(n)"] = parse(Float64, offset_match[3])
+#             results["n (number of points)"] = parse(Int, offset_match[4])
+#         end
         
-        # Добавляем данные итерации в массив
-        push!(iterations_data, results)
+#         # Добавляем данные итерации в массив
+#         push!(iterations_data, results)
 
-    end
+#     end
 
-    return iterations_data
-end
+#     return iterations_data
+# end

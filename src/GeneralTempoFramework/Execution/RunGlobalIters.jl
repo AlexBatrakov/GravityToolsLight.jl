@@ -90,7 +90,7 @@ function run_tempo_global_iters(bsets::BasicTempoSettings, gisets::GlobalIterati
         rms = sqrt(mean(residuals .^ 2))
 
         results = results_basic.last_internal_iteration.result
-        println("chisqr = $(results.chisqr), chisqr/nfree = $(results.chisqr_nfree), TRES = $(results.TRES.post_fit), RMS = $rms, Pre/post = $(results.pre_post)")
+        println("chisqr = $(results.fit_chisq), chisqr/nfree = $(results.chisqr_nfree), TRES = $(results.TRES.post_fit), RMS = $rms, RMS_TN = $(results.rms_tn_post_fit_residual_us), Pre/post = $(results.pre_post)")
 
 
 

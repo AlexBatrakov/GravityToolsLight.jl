@@ -9,7 +9,7 @@ Holds the key settings for running the Tempo software.
 - `silent::Bool`: If true, Tempo runs without printing progress to the console.
 - `print_output::Bool`: If true, the output of Tempo is printed.
 - `iterative_mode::Bool`: If true, Tempo runs in iterative mode.
-- `fit_EFACs_EQUADs::Bool`: If true, EFAC and EQUAD parameters are fitted.
+- `fit_EFACs_EQUADs::Bool`: If true, EFAsC and EQUAD parameters are fitted.
 
 # Constructor
     BasicTempoKeys(;silent = true, print_output = false, iterative_mode = true, fit_EFACs_EQUADs = false)
@@ -49,7 +49,7 @@ Holds all the basic settings required to run a single instance of the Tempo soft
 # Constructor
     BasicTempoSettings(;work_dir, version, par_file_init, tim_file, flags = "", keys = BasicTempoKeys(), tparams = GeneralTempoParameter[])
 """
-struct BasicTempoSettings{T <: AbstractTempoVersion}
+mutable struct BasicTempoSettings{T <: AbstractTempoVersion}
     work_dir::String
     version::T
     par_file_init::String

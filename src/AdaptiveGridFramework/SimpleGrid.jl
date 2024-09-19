@@ -36,31 +36,31 @@ function precalculate_Grid(grid::SimpleGrid, get_value_func, calc_params!)
     return grid
 end
 
-function refine_1Darray(x::Vector{Float64})
-    x_refined = Vector{Float64}(undef, length(x)*2-1)
-    for i in 1:length(x)-1
-        x_refined[2*i-1] = x[i]
-        x_refined[2*i] = 0.5*(x[i+1] + x[i])
-    end
-    x_refined[end] = x[end]
-    return x_refined
-end
+# function refine_1Darray(x::Vector{Float64})
+#     x_refined = Vector{Float64}(undef, length(x)*2-1)
+#     for i in 1:length(x)-1
+#         x_refined[2*i-1] = x[i]
+#         x_refined[2*i] = 0.5*(x[i+1] + x[i])
+#     end
+#     x_refined[end] = x[end]
+#     return x_refined
+# end
 
-function refine_2Darray(arr::Matrix{T}) where {T}
-    arr_refined = fill(-one(T), 2 .* size(arr) .- 1)
-    for i in 1:size(arr)[1], j in 1:size(arr)[2]
-        arr_refined[2*i-1,2*j-1] = arr[i,j]
-    end
-    return arr_refined::Matrix{T}
-end
+# function refine_2Darray(arr::Matrix{T}) where {T}
+#     arr_refined = fill(-one(T), 2 .* size(arr) .- 1)
+#     for i in 1:size(arr)[1], j in 1:size(arr)[2]
+#         arr_refined[2*i-1,2*j-1] = arr[i,j]
+#     end
+#     return arr_refined::Matrix{T}
+# end
 
-function refine_Dict_of_2DArrays(dict::Dict{Symbol,Matrix{T}}) where {T}
-    dict_refined = Dict{Symbol,Matrix{T}}()
-    for (key, value) in dict
-        dict_refined[key] = refine_2Darray(dict[key])
-    end
-    return dict_refined::Dict{Symbol,Matrix{T}}
-end
+# function refine_Dict_of_2DArrays(dict::Dict{Symbol,Matrix{T}}) where {T}
+#     dict_refined = Dict{Symbol,Matrix{T}}()
+#     for (key, value) in dict
+#         dict_refined[key] = refine_2Darray(dict[key])
+#     end
+#     return dict_refined::Dict{Symbol,Matrix{T}}
+# end
 
 function refine_Grid(grid::SimpleGrid, get_value_func, cell_selector, calc_params!)
 
