@@ -14,6 +14,7 @@ using ColorSchemes
 using PyPlot
 using ProgressMeter
 using HypothesisTests
+using Random
 
 include("Utils.jl")
 export TestParameters
@@ -53,7 +54,8 @@ include("GeneralTempoFramework/Settings/ParameterSweepSettings.jl")
 export ParameterSweepSettings
 include("GeneralTempoFramework/Settings/GeneralSettings.jl")
 export GeneralSettings, GeneralTempoFramework
-
+include("GeneralTempoFramework/Settings/AnnealingSettings.jl")
+export AnnealingParameter, AP, AnnealingSettings
 
 # Включение и экспорт из Execution
 include("GeneralTempoFramework/Execution/RunBasic.jl")
@@ -64,6 +66,8 @@ include("GeneralTempoFramework/Execution/RunParameterSweep.jl")
 export run_tempo_parameter_sweep
 include("GeneralTempoFramework/Execution/RunGeneral.jl")
 export run_tempo_general
+include("GeneralTempoFramework/Execution/RunAnnealing.jl")
+export compute_energy, run_tempo_annealing, run_tempo_annealing_parallel
 
 include("GeneralTempoFramework/Utils/TempoUtils.jl")
 #export TempoUtils
